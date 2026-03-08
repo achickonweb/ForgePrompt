@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}JSON Formatter{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/tools" class="back-link">← All Tools</a>
+    <h1 class="page-title">JSON Formatter</h1>
+    <p class="page-sub">Prettify, minify and validate JSON — runs entirely in your browser.</p>
+  </div>
+</section>
+
+<section class="section tool-section">
+  <div class="tool-controls">
+    <button class="tool-btn active" onclick="formatJSON('pretty')">Prettify</button>
+    <button class="tool-btn" onclick="formatJSON('minify')">Minify</button>
+    <button class="tool-btn" onclick="validateJSON()">Validate</button>
+    <button class="tool-btn" onclick="clearAll()">Clear</button>
+    <button class="tool-btn btn-copy-tool" onclick="copyOutput()">Copy Output</button>
+  </div>
+
+  <div class="tool-editor-wrap">
+    <div class="editor-pane">
+      <div class="pane-label">INPUT <span class="pane-hint">Paste your JSON here</span></div>
+      <textarea id="jsonInput" class="code-area" spellcheck="false" placeholder='{"key": "value", "array": [1, 2, 3]}'></textarea>
+    </div>
+    <div class="editor-divider">
+      <button class="transform-btn" onclick="formatJSON('pretty')" title="Transform →">⇒</button>
+    </div>
+    <div class="editor-pane">
+      <div class="pane-label">OUTPUT</div>
+      <pre id="jsonOutput" class="code-area code-output"></pre>
+    </div>
+  </div>
+
+  <div id="jsonStatus" class="tool-status"></div>
+
+  <div class="tool-tips">
+    <h4>Tips</h4>
+    <ul>
+      <li>Prettify formats JSON with 2-space indentation</li>
+      <li>Minify removes all whitespace for smaller payloads</li>
+      <li>Validate checks syntax and shows the first error</li>
+    </ul>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function formatJSON(mode) {
+  const input = document.getElementById('jsonInput').value.trim();
+  const output = document.getElementById('jsonOutput');
+  const status = document.getElementById('jsonStatus');
+  if (!input) { status.textContent = ''; output.textContent = ''; return; }
+  try {
+    const parsed = JSON.parse(input);
+    output.textContent = mode === 'minify'
+      ? JSON.stringify(parsed)
+      : JSON.stringify(parsed, null, 2);
+    setStatus('✓ Valid JSON', 'success');
+  } catch (e) {
+    output.textContent = '';
+    setStatus('✗ Invalid JSON: ' + e.message, 'error');
+  }
+}
+
+function validateJSON() {
+  const input = document.getElementById('jsonInput').value.trim();
+  if (!input) { setStatus('No input provided.', 'warn'); return; }
+  try {
+    JSON.parse(input);
+    setStatus('✓ Valid JSON — no errors found.', 'success');
+  } catch (e) {
+    setStatus('✗ ' + e.message, 'error');
+  }
+}
+
+function clearAll() {
+  document.getElementById('jsonInput').value = '';
+  document.getElementById('jsonOutput').textContent = '';
+  document.getElementById('jsonStatus').textContent = '';
+}
+
+function copyOutput() {
+  const text = document.getElementById('jsonOutput').textContent;
+  if (!text) { setStatus('Nothing to copy.', 'warn'); return; }
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('JSON copied!');
+    setStatus('✓ Copied to clipboard', 'success');
+  });
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('jsonStatus');
+  el.textContent = msg;
+  el.className = 'tool-status status-' + type;
+}
+
+// Auto-format on paste
+document.getElementById('jsonInput').addEventListener('paste', () => {
+  setTimeout(() => formatJSON('pretty'), 50);
+});
+</script>
+{% endblock %}

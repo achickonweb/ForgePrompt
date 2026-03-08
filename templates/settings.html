@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <span class="section-tag">// account</span>
+    <h1 class="page-title">Settings</h1>
+  </div>
+</section>
+
+<section class="section" style="max-width:640px">
+  {% if success %}
+    <div class="flash flash--success" style="margin-bottom:20px">Changes saved successfully.</div>
+  {% endif %}
+  {% if errors %}
+    <ul class="auth-errors" style="margin-bottom:20px">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  <!-- Profile info -->
+  <div class="settings-card">
+    <h2 class="settings-section-title">Profile</h2>
+    <div class="settings-avatar-row">
+      <div class="profile-avatar-lg" style="background:{{ user.avatar_color }}">
+        {{ user.username[0].upper() }}
+      </div>
+      <div>
+        <strong>{{ user.username }}</strong>
+        <p style="color:var(--text-muted);font-size:.82rem">Member since {{ user.created }}</p>
+      </div>
+    </div>
+    <form method="POST" action="/settings">
+      <input type="hidden" name="action" value="update_bio" />
+      <div class="form-group">
+        <label>Bio <span class="hint">(max 280 chars)</span></label>
+        <textarea name="bio" rows="3" maxlength="280" placeholder="Tell the community about yourself…">{{ user.bio or '' }}</textarea>
+      </div>
+      <button type="submit" class="btn-primary">Save Bio</button>
+    </form>
+  </div>
+
+  <!-- Change password -->
+  <div class="settings-card">
+    <h2 class="settings-section-title">Change Password</h2>
+    <form method="POST" action="/settings">
+      <input type="hidden" name="action" value="change_password" />
+      <div class="form-group">
+        <label>Current password</label>
+        <input type="password" name="current_password" autocomplete="current-password" required />
+      </div>
+      <div class="form-group">
+        <label>New password</label>
+        <input type="password" name="new_password" autocomplete="new-password" minlength="6" required />
+      </div>
+      <div class="form-group">
+        <label>Confirm new password</label>
+        <input type="password" name="confirm_password" autocomplete="new-password" required />
+      </div>
+      <button type="submit" class="btn-primary">Update Password</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,125 @@
+<!-- Feature 8: Prompt Requests listing page -->
+{% extends "base.html" %}
+{% block title %}Prompt Requests{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <span class="section-tag">// community requests</span>
+    <h1 class="page-title">Prompt Requests</h1>
+    <p class="page-sub">Request a prompt the community will build for you.</p>
+  </div>
+</section>
+
+<!-- FILTERS -->
+<section class="filters-bar">
+  <div class="filters-inner">
+    <div class="filter-cats">
+      <a href="/requests?status=open{% if category_filter %}&category={{ category_filter }}{% endif %}&sort={{ sort }}"
+         class="cat-chip {% if status_filter == 'open' %}active{% endif %}">Open</a>
+      <a href="/requests?status=fulfilled{% if category_filter %}&category={{ category_filter }}{% endif %}&sort={{ sort }}"
+         class="cat-chip {% if status_filter == 'fulfilled' %}active{% endif %}">Fulfilled</a>
+      <a href="/requests?status=all{% if category_filter %}&category={{ category_filter }}{% endif %}&sort={{ sort }}"
+         class="cat-chip {% if status_filter == 'all' %}active{% endif %}">All</a>
+    </div>
+    <div class="sort-wrap">
+      <select onchange="applyReqSort(this.value)">
+        <option value="newest" {% if sort=='newest' %}selected{% endif %}>Newest</option>
+        <option value="submissions" {% if sort=='submissions' %}selected{% endif %}>Most Submissions</option>
+        <option value="wanted" {% if sort=='wanted' %}selected{% endif %}>Most Wanted</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  {% if current_user %}
+  <div style="margin-bottom:28px">
+    <button class="btn-primary" onclick="document.getElementById('newReqWrap').style.display='block';this.style.display='none'">+ New Request</button>
+    <div id="newReqWrap" style="display:none;margin-top:16px" class="settings-card">
+      <div class="form-group">
+        <label>Title <span class="required">*</span></label>
+        <input type="text" id="reqTitle" placeholder="e.g. Need a prompt for academic paper review" maxlength="120" />
+      </div>
+      <div class="form-group">
+        <label>Description <span class="required">*</span></label>
+        <textarea id="reqDesc" rows="4" placeholder="Describe what you need in detail (min 10 chars)…" maxlength="2000"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Category <span class="hint">(optional)</span></label>
+        <select id="reqCategory">
+          <option value="">— Any —</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Bounty Message <span class="hint">(optional, freeform)</span></label>
+        <input type="text" id="reqBounty" placeholder="e.g. Will feature on my blog!" maxlength="200" />
+      </div>
+      <button class="btn-primary btn-sm" onclick="createRequest()">Submit Request</button>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if requests %}
+  <div class="requests-list">
+    {% for r in requests %}
+    <a href="/requests/{{ r.id }}" class="request-card">
+      <div class="request-card-top">
+        <span class="request-status request-status--{{ r.get('status','open') }}">{{ r.get('status','open') }}</span>
+        {% if r.get('category') %}<span class="cat-badge cat-{{ r.category | lower | replace(' ', '-') }}">{{ r.category }}</span>{% endif %}
+        <span class="request-date">{{ r.created[:10] }}</span>
+      </div>
+      <h3 class="request-card-title">{{ r.title }}</h3>
+      <p class="request-card-desc">{{ r.description[:160] }}{% if r.description|length > 160 %}…{% endif %}</p>
+      {% if r.get('bounty') %}
+      <div class="request-bounty">🎁 {{ r.bounty }}</div>
+      {% endif %}
+      <div class="request-card-footer">
+        <span>By {{ r.author }}</span>
+        <span>{{ r.get('submissions',[])|length }} submission{% if r.get('submissions',[])|length != 1 %}s{% endif %}</span>
+        <span>▲ {{ r.get('upvoted_by',[])|length }} want{% if r.get('upvoted_by',[])|length != 1 %}s{% endif %}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>No requests found</h3>
+    <p>{% if current_user %}Be the first to request a prompt!{% else %}Log in to submit a request.{% endif %}</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function applyReqSort(val) {
+  var params = new URLSearchParams(window.location.search);
+  params.set('sort', val);
+  window.location.search = params.toString();
+}
+
+function createRequest() {
+  var title = document.getElementById('reqTitle')?.value.trim();
+  var desc  = document.getElementById('reqDesc')?.value.trim();
+  if (!title) return showToast('Title required.','error');
+  if (!desc || desc.length < 10) return showToast('Description too short.','error');
+  fetch('/api/requests', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      title: title,
+      description: desc,
+      category: document.getElementById('reqCategory')?.value || '',
+      bounty: document.getElementById('reqBounty')?.value.trim() || ''
+    })
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Request created!'); location.href='/requests/'+d.request.id; }
+    else showToast(d.error||'Error','error');
+  });
+}
+</script>
+{% endblock %}

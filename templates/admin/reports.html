@@ -1,0 +1,95 @@
+{% extends "admin/layout.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reported Prompts{% endblock %}
+{% block breadcrumb_current %}reports{% endblock %}
+
+{% block content %}
+<div class="adm-panel">
+  <div class="adm-filter-bar">
+    <div class="adm-filter-tabs">
+      <a href="{{ url_for('admin.reports', show='open') }}"
+         class="adm-filter-tab {% if show=='open' %}active{% endif %}">
+        Open <span style="opacity:.6">({{ open_count }})</span>
+      </a>
+      <a href="{{ url_for('admin.reports', show='resolved') }}"
+         class="adm-filter-tab {% if show=='resolved' %}active{% endif %}">
+        Resolved <span style="opacity:.6">({{ resolved_count }})</span>
+      </a>
+      <a href="{{ url_for('admin.reports', show='all') }}"
+         class="adm-filter-tab {% if show=='all' %}active{% endif %}">All</a>
+    </div>
+  </div>
+
+  {% if reports %}
+    {% for r in reports %}
+    <div style="padding:20px;border-bottom:1px solid var(--adm-border)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div style="flex:1;min-width:0">
+          <!-- Prompt info -->
+          {% if r.prompt %}
+            <div style="margin-bottom:8px">
+              <a href="{{ url_for('admin.admin_edit_prompt', prompt_id=r.prompt_id) }}"
+                 style="font-weight:700;color:var(--adm-text);text-decoration:none;font-size:.88rem">
+                {{ r.prompt.get('title','(deleted prompt)') }}
+              </a>
+              <span style="color:var(--adm-muted);font-size:.75rem;margin-left:8px">
+                by {{ r.prompt.get('author','?') }}
+              </span>
+              {% set pstatus = r.prompt.get('status','published') %}
+              {% if pstatus == 'hidden' %}
+                <span class="adm-badge badge-red" style="margin-left:6px">hidden</span>
+              {% elif pstatus == 'published' %}
+                <span class="adm-badge badge-green" style="margin-left:6px">live</span>
+              {% endif %}
+            </div>
+          {% else %}
+            <div style="color:var(--adm-muted);font-size:.82rem;margin-bottom:8px">⚠ Prompt deleted</div>
+          {% endif %}
+
+          <!-- Report reason -->
+          <div style="background:var(--adm-bg3);border:1px solid var(--adm-border);border-radius:var(--adm-radius);padding:10px 14px;margin-bottom:10px">
+            <div style="font-size:.65rem;font-family:var(--adm-mono);color:var(--adm-muted);margin-bottom:4px">REASON</div>
+            <div style="font-size:.82rem">{{ r.reason }}</div>
+          </div>
+
+          <!-- Meta -->
+          <div style="font-size:.72rem;font-family:var(--adm-mono);color:var(--adm-muted);display:flex;gap:16px">
+            <span>🚩 Reported by <strong style="color:var(--adm-text)">{{ r.reporter }}</strong></span>
+            <span>🕐 {{ r.get('created','')[:16]|replace('T',' ') }}</span>
+            {% if r.get('resolved') %}
+              <span style="color:var(--adm-accent)">✓ Resolved by {{ r.get('resolved_by','?') }} · {{ r.get('resolved_at','')[:10] }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        {% if not r.get('resolved') %}
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          {% if r.prompt %}
+            <a href="{{ url_for('admin.admin_edit_prompt', prompt_id=r.prompt_id) }}" class="adm-btn adm-btn-ghost adm-btn-sm">✏ Edit</a>
+            <form method="POST" action="{{ url_for('admin.hide_prompt', prompt_id=r.prompt_id) }}">
+              <button class="adm-btn adm-btn-ghost adm-btn-sm" style="width:100%">🙈 Hide</button>
+            </form>
+          {% endif %}
+          <form method="POST" action="{{ url_for('admin.resolve_report', report_id=r.id) }}">
+            <button class="adm-btn adm-btn-accent adm-btn-sm" style="width:100%">✓ Resolve</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.dismiss_report', report_id=r.id) }}">
+            <button class="adm-btn adm-btn-ghost adm-btn-sm" style="width:100%">✕ Dismiss</button>
+          </form>
+        </div>
+        {% else %}
+          <span class="adm-badge badge-green">resolved</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="adm-empty">
+      <div class="adm-empty-icon">🚩</div>
+      <div class="adm-empty-title">No {{ show }} reports</div>
+      <div class="adm-empty-sub">All clear here.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

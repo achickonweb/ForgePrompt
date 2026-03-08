@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Version History: {{ prompt.title }}{% endblock %}
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/prompts/{{ prompt.id }}" class="back-link">← Back to prompt</a>
+    <h1 class="page-title">Version History</h1>
+    <p class="page-sub">{{ prompt.title }} — {{ versions|length }} previous version{% if versions|length != 1 %}s{% endif %}</p>
+  </div>
+</section>
+<section class="section" style="max-width:800px">
+  <div class="detail-prompt-box" style="margin-bottom:24px">
+    <div class="detail-prompt-header">
+      <span class="detail-prompt-label">// CURRENT VERSION</span>
+    </div>
+    <pre class="detail-prompt-text">{{ prompt.text }}</pre>
+  </div>
+  {% for v in versions %}
+  <div class="detail-prompt-box" style="margin-bottom:16px;opacity:.7">
+    <div class="detail-prompt-header">
+      <span class="detail-prompt-label">// {{ v.saved[:16]|replace('T',' ') }} — "{{ v.title }}"</span>
+      <span style="font-size:.7rem;color:var(--text-dim)">by {{ v.by }}</span>
+    </div>
+    <pre class="detail-prompt-text" style="max-height:200px;overflow-y:auto">{{ v.text }}</pre>
+  </div>
+  {% endfor %}
+  {% if not versions %}
+  <div class="empty-state">
+    <div class="empty-icon">📜</div>
+    <h3>No previous versions</h3>
+    <p>Edit history will appear here after changes are made.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

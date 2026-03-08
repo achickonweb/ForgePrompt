@@ -1,0 +1,231 @@
+<!-- What I changed (Features 4, 5, 8):
+  - Feature 5: Added RSS alternate link in <head>
+  - Feature 8: Added "Requests" link in nav with open count badge
+  - Feature 4: Added model dropdown in submit modal
+  - Feature 6: Added token count in submit modal
+-->
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}ForgePrompt{% endblock %} — AI Prompts & Dev Tools</title>
+  <meta name="description" content="{% block meta_desc %}Curated AI prompts and developer tools. Real upvotes, real views, real community.{% endblock %}" />
+  <link rel="alternate" type="application/rss+xml" title="ForgePrompt RSS Feed" href="/feed.xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <div class="noise-overlay" aria-hidden="true"></div>
+
+  <!-- NAV -->
+  <header class="site-header">
+    <nav class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="logo-bracket">[</span>ForgePrompt<span class="logo-bracket">]</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="/"        class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Home</a></li>
+        <li><a href="/prompts" class="nav-link {% if request.endpoint in ['prompts_page','prompt_detail'] %}active{% endif %}">Prompts</a></li>
+        <li>
+          <a href="/requests" class="nav-link {% if request.endpoint in ['requests_page','request_detail'] %}active{% endif %}">
+            Requests{% if open_requests_count %} <span class="nav-badge-inline">{{ open_requests_count }}</span>{% endif %}
+          </a>
+        </li>
+        <li><a href="/chains" class="nav-link {% if request.endpoint in ['chains_page','chain_detail'] %}active{% endif %}">Chains</a></li>
+        <li><a href="/tools"   class="nav-link {% if request.endpoint in ['tools_page','tool_detail'] %}active{% endif %}">Dev Tools</a></li>
+      </ul>
+
+      <div class="nav-right">
+        {% if current_user %}<a href="/notifications" class="notif-bell" title="Notifications">🔔{% if unread_notif_count %}<span class="notif-badge">{{ unread_notif_count }}</span>{% endif %}</a>{% endif %}
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
+          <span class="theme-icon">◐</span>
+        </button>
+
+        {% if current_user %}
+          <div class="user-menu" id="userMenu">
+            <button class="user-trigger" onclick="toggleUserMenu(event)">
+              <span class="avatar-chip" style="background:{{ current_user.avatar_color }}">
+                {{ current_user.username[0].upper() }}
+              </span>
+              <span class="user-trigger-name">{{ current_user.username }}</span>
+              <span class="user-caret">▾</span>
+            </button>
+            <div class="user-dropdown" id="userDropdown">
+              <a href="/profile/{{ current_user.username }}" class="dropdown-item">
+                <span>👤</span> My Profile
+              </a>
+              <a href="/collections/{{ current_user.username }}" class="dropdown-item">
+                <span>📁</span> My Collections
+              </a>
+              <a href="/settings" class="dropdown-item">
+                <span>⚙</span> Settings
+              </a>
+              <div class="dropdown-divider"></div>
+              <a href="/logout" class="dropdown-item dropdown-item--danger">
+                <span>→</span> Log out
+              </a>
+            </div>
+          </div>
+          <button class="nav-submit-btn" onclick="openSubmitModal()">+ Submit</button>
+        {% else %}
+          <a href="/login"    class="btn-ghost btn-sm">Log in</a>
+          <a href="/register" class="nav-submit-btn">Sign up</a>
+        {% endif %}
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/"        class="mobile-link">Home</a>
+    <a href="/prompts" class="mobile-link">Prompts</a>
+    <a href="/requests" class="mobile-link">Requests{% if open_requests_count %} ({{ open_requests_count }}){% endif %}</a>
+    <a href="/chains" class="mobile-link">Chains</a>
+    <a href="/tools"   class="mobile-link">Dev Tools</a>
+    {% if current_user %}
+      <a href="/profile/{{ current_user.username }}" class="mobile-link">My Profile</a>
+      <a href="/collections/{{ current_user.username }}" class="mobile-link">My Collections</a>
+      <a href="/settings"  class="mobile-link">Settings</a>
+      <a href="/logout"    class="mobile-link">Log out</a>
+      <button class="nav-submit-btn" onclick="openSubmitModal(); closeMobileMenu()">+ Submit Prompt</button>
+    {% else %}
+      <a href="/login"    class="mobile-link">Log in</a>
+      <a href="/register" class="nav-submit-btn" style="display:block;text-align:center;margin-top:8px">Sign up</a>
+    {% endif %}
+  </div>
+
+  <!-- FLASH MESSAGES -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash flash--{{ category }}">
+            {{ message }}
+            <button class="flash-close" onclick="this.parentElement.remove()">✕</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="site-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo-bracket">[</span>ForgePrompt<span class="logo-bracket">]</span>
+        <p>Real prompts. Real votes. No fakes.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Prompts</h4>
+          <a href="/prompts?category=ChatGPT">ChatGPT</a>
+          <a href="/prompts?category=Coding">Coding</a>
+          <a href="/prompts?category=Image+Generation">Image Generation</a>
+          <a href="/prompts?category=Video+Generation">Video Generation</a>
+          <a href="/prompts?category=Game+Development">Game Development</a>
+        </div>
+        <div class="footer-col">
+          <h4>Tools</h4>
+          <a href="/tools/json-formatter">JSON Formatter</a>
+          <a href="/tools/base64">Base64 Codec</a>
+          <a href="/tools/password-generator">Password Generator</a>
+          <a href="/tools/uuid-generator">UUID Generator</a>
+          <a href="/tools/text-counter">Text Counter</a>
+        </div>
+        <div class="footer-col">
+          <h4>Community</h4>
+          <a href="/requests">Prompt Requests</a>
+          <a href="/feed.xml">RSS Feed</a>
+          {% if current_user %}
+            <a href="/profile/{{ current_user.username }}">My Profile</a>
+            <a href="/settings">Settings</a>
+          {% else %}
+            <a href="/register">Sign up</a>
+            <a href="/login">Log in</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2025 ForgePrompt &mdash; Built with Flask &amp; ☕ &mdash; All stats are real</span>
+    </div>
+  </footer>
+
+  <!-- SUBMIT MODAL -->
+  <div class="modal-overlay" id="submitModal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeSubmitModal()" aria-label="Close">✕</button>
+      <h2 class="modal-title">Submit a Prompt</h2>
+      {% if not current_user %}
+        <div class="modal-auth-gate">
+          <p>You need an account to submit prompts.</p>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <a href="/register" class="btn-primary">Sign up free</a>
+            <a href="/login"    class="btn-ghost">Log in</a>
+          </div>
+        </div>
+      {% else %}
+        <div class="form-group">
+          <label>Title <span class="required">*</span></label>
+          <input type="text" id="s_title" placeholder="e.g. Expert Code Reviewer" maxlength="120" />
+        </div>
+        <div class="form-group">
+          <label>Category <span class="required">*</span></label>
+          <select id="s_category">
+            <option value="">— Select category —</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Model <span class="hint">(optional)</span></label>
+          <select id="s_model">
+            <option value="">— Any model —</option>
+            {% for m in model_options %}
+            <option value="{{ m }}">{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Prompt Text <span class="required">*</span></label>
+          <textarea id="s_text" rows="6" placeholder="Write your prompt here. Use [PLACEHOLDERS] for dynamic parts…" maxlength="5000"></textarea>
+          <div style="display:flex;justify-content:space-between">
+            <span class="token-badge" id="submitTokenCount">~0 tokens</span>
+            <span class="char-count" id="charCount">0 / 5000</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tags <span class="hint">(comma-separated)</span></label>
+          <input type="text" id="s_tags" placeholder="e.g. coding, refactoring, python" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-ghost" onclick="closeSubmitModal()">Cancel</button>
+          <button class="btn-primary" onclick="submitPrompt()">Submit →</button>
+        </div>
+        <div class="submit-feedback" id="submitFeedback"></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

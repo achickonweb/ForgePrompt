@@ -1,0 +1,66 @@
+<!-- Feature 8: Admin requests management -->
+{% extends "admin/layout.html" %}
+{% block title %}Requests{% endblock %}
+{% block page_title %}Prompt Requests{% endblock %}
+{% block breadcrumb_current %}requests{% endblock %}
+
+{% block content %}
+<div class="adm-panel">
+  <div class="adm-filter-bar">
+    <div class="adm-filter-tabs">
+      <a href="{{ url_for('admin.admin_requests') }}"
+         class="adm-filter-tab {% if not status_filter %}active{% endif %}">All</a>
+      <a href="{{ url_for('admin.admin_requests', status='open') }}"
+         class="adm-filter-tab {% if status_filter=='open' %}active{% endif %}">
+        Open <span style="opacity:.6">({{ open_count }})</span>
+      </a>
+      <a href="{{ url_for('admin.admin_requests', status='fulfilled') }}"
+         class="adm-filter-tab {% if status_filter=='fulfilled' %}active{% endif %}">Fulfilled</a>
+      <a href="{{ url_for('admin.admin_requests', status='closed') }}"
+         class="adm-filter-tab {% if status_filter=='closed' %}active{% endif %}">Closed</a>
+    </div>
+  </div>
+
+  {% if requests %}
+    {% for r in requests %}
+    <div style="padding:20px;border-bottom:1px solid var(--adm-border)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span class="adm-badge {% if r.get('status','open')=='open' %}badge-green{% elif r.status=='fulfilled' %}badge-blue{% else %}badge-red{% endif %}">
+              {{ r.get('status','open') }}
+            </span>
+            <strong style="font-size:.88rem">{{ r.title }}</strong>
+          </div>
+          <div style="font-size:.82rem;color:var(--adm-muted);margin-bottom:6px">
+            {{ r.description[:200] }}{% if r.description|length > 200 %}…{% endif %}
+          </div>
+          <div style="font-size:.72rem;font-family:var(--adm-mono);color:var(--adm-muted);display:flex;gap:16px">
+            <span>By <strong style="color:var(--adm-text)">{{ r.author }}</strong></span>
+            <span>{{ r.created[:10] }}</span>
+            <span>{{ r.get('submissions',[])|length }} submissions</span>
+            <span>▲ {{ r.get('upvoted_by',[])|length }} wants</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          {% if r.get('status','open') == 'open' %}
+          <form method="POST" action="{{ url_for('admin.close_request', req_id=r.id) }}">
+            <button class="adm-btn adm-btn-ghost adm-btn-sm" style="width:100%">Close</button>
+          </form>
+          {% endif %}
+          <form method="POST" action="{{ url_for('admin.delete_request', req_id=r.id) }}"
+                onsubmit="return confirm('Delete this request?')">
+            <button class="adm-btn adm-btn-danger adm-btn-sm" style="width:100%">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="adm-empty">
+      <div class="adm-empty-icon">📋</div>
+      <div class="adm-empty-title">No requests found</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <h1 class="page-title">Notifications</h1>
+    {% if notifications %}
+    <button class="btn-ghost btn-sm" style="margin-top:12px" onclick="markAllRead()">Mark all as read</button>
+    {% endif %}
+  </div>
+</section>
+<section class="section">
+  {% if notifications %}
+  <div class="notif-list">
+    {% for n in notifications %}
+    <a href="{{ n.link or '#' }}" class="notif-item {% if not n.read %}notif-unread{% endif %}"
+       onclick="markRead('{{ n.id }}')">
+      <div class="notif-icon">
+        {% if n.type == 'comment' %}💬{% elif n.type == 'fork' %}🔀{% elif n.type == 'follow' %}👤{% elif n.type == 'accepted' %}✓{% elif n.type == 'submission' %}📝{% else %}🔔{% endif %}
+      </div>
+      <div class="notif-body">
+        <div class="notif-message">{{ n.message }}</div>
+        <div class="notif-time">{{ n.created[:16]|replace('T',' ') }}</div>
+      </div>
+      {% if not n.read %}<span class="notif-dot"></span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🔔</div>
+    <h3>No notifications</h3>
+    <p>You're all caught up!</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+function markRead(id) { fetch('/api/notifications/'+id+'/read',{method:'POST'}); }
+function markAllRead() {
+  fetch('/api/notifications/read-all',{method:'POST'}).then(()=>{
+    document.querySelectorAll('.notif-unread').forEach(el=>el.classList.remove('notif-unread'));
+    document.querySelectorAll('.notif-dot').forEach(el=>el.remove());
+    showToast('All marked as read.');
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "admin/layout.html" %}
+{% block title %}Edit Prompt{% endblock %}
+{% block page_title %}Edit Prompt{% endblock %}
+{% block breadcrumb_current %}edit prompt{% endblock %}
+
+{% block content %}
+<div class="adm-content-narrow">
+  {% if errors %}
+    <div class="adm-alert error" style="margin-bottom:20px">
+      <div>
+        {% for e in errors %}<div>⚠ {{ e }}</div>{% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="adm-panel">
+    <div class="adm-panel-header">
+      <div class="adm-panel-title">Editing: {{ prompt.title[:60] }}{% if prompt.title|length>60 %}…{% endif %}</div>
+      <div style="display:flex;gap:8px">
+        <a href="{{ url_for('prompts_page') }}#{{ prompt.id }}" target="_blank" class="adm-btn adm-btn-ghost adm-btn-sm">View live ↗</a>
+      </div>
+    </div>
+    <div class="adm-panel-body">
+      <form method="POST">
+        <div class="adm-field">
+          <label class="adm-label">Title</label>
+          <input type="text" name="title" class="adm-input" value="{{ prompt.title }}" maxlength="120" required/>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+          <div class="adm-field">
+            <label class="adm-label">Category</label>
+            <select name="category" class="adm-select">
+              {% for cat in categories %}
+                <option value="{{ cat }}" {% if prompt.category==cat %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="adm-field">
+            <label class="adm-label">Status</label>
+            <select name="status" class="adm-select">
+              <option value="published" {% if prompt.get('status','published')=='published' %}selected{% endif %}>Published</option>
+              <option value="pending"   {% if prompt.get('status')=='pending' %}selected{% endif %}>Pending</option>
+              <option value="hidden"    {% if prompt.get('status')=='hidden' %}selected{% endif %}>Hidden</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="adm-field" style="margin-top:16px">
+          <label class="adm-label">Model <span style="color:var(--adm-muted)">(optional)</span></label>
+          <select name="model" class="adm-select">
+            <option value="">— Any model —</option>
+            {% for m in model_options %}
+              <option value="{{ m }}" {% if prompt.get('model')==m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="adm-field" style="margin-top:16px">
+          <label class="adm-label">Tags <span style="color:var(--adm-muted)">(comma-separated, max 8)</span></label>
+          <input type="text" name="tags" class="adm-input" value="{{ prompt.tags | join(', ') }}" placeholder="e.g. python, chatgpt, creative"/>
+        </div>
+
+        <div class="adm-field" style="margin-top:16px">
+          <label class="adm-label">Prompt Text</label>
+          <textarea name="text" class="adm-input adm-textarea" rows="12" minlength="20" required>{{ prompt.text }}</textarea>
+          <div style="font-size:.72rem;color:var(--adm-muted);margin-top:4px">Max 5000 characters</div>
+        </div>
+
+        <div class="adm-field" style="margin-top:16px;display:flex;align-items:center;gap:10px">
+          <input type="checkbox" name="pinned" value="1" id="pinnedCheck" {% if prompt.get('pinned') %}checked{% endif %}/>
+          <label for="pinnedCheck" class="adm-label" style="margin:0;cursor:pointer">📌 Pinned to top</label>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:24px">
+          <button type="submit" class="adm-btn adm-btn-accent">Save Changes</button>
+          <a href="{{ url_for('admin.admin_prompts') }}" class="adm-btn adm-btn-ghost">Cancel</a>
+          <form method="POST" action="{{ url_for('admin.admin_delete_prompt', prompt_id=prompt.id) }}"
+                style="margin-left:auto" onsubmit="return confirm('Delete this prompt permanently?')">
+            <button type="submit" class="adm-btn adm-btn-danger">Delete Prompt</button>
+          </form>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Meta info -->
+  <div class="adm-panel">
+    <div class="adm-panel-header"><div class="adm-panel-title">Prompt Metadata</div></div>
+    <div class="adm-panel-body">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <div>
+          <div class="adm-stat-label">Author</div>
+          <div style="font-weight:700;margin-top:4px">{{ prompt.author }}</div>
+        </div>
+        <div>
+          <div class="adm-stat-label">Created</div>
+          <div style="font-weight:700;margin-top:4px;font-family:var(--adm-mono)">{{ prompt.get('created','—') }}</div>
+        </div>
+        <div>
+          <div class="adm-stat-label">Prompt ID</div>
+          <div style="font-weight:700;margin-top:4px;font-family:var(--adm-mono);font-size:.78rem">{{ prompt.id }}</div>
+        </div>
+        <div>
+          <div class="adm-stat-label">Views</div>
+          <div style="font-weight:700;margin-top:4px">{{ prompt.get('views',0) }}</div>
+        </div>
+        <div>
+          <div class="adm-stat-label">Upvotes</div>
+          <div style="font-weight:700;margin-top:4px">{{ prompt.upvoted_by|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

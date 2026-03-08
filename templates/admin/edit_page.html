@@ -1,0 +1,131 @@
+{% extends "admin/layout.html" %}
+{% block title %}Edit Page{% endblock %}
+{% block page_title %}Edit Page: {{ page.slug }}{% endblock %}
+{% block breadcrumb_current %}{{ page.slug }}{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('custom_page', slug=page.slug) }}" target="_blank" class="adm-btn adm-btn-ghost adm-btn-sm">↗ Preview</a>
+  <a href="{{ url_for('admin.pages_list') }}" class="adm-btn adm-btn-ghost adm-btn-sm">← Back</a>
+{% endblock %}
+
+{% block content %}
+<div class="adm-content-narrow">
+  <div class="adm-panel">
+    <div class="adm-panel-header">
+      <div class="adm-panel-title">
+        Editing <code style="font-family:var(--adm-mono);font-size:.82rem;color:var(--adm-blue)">/page/{{ page.slug }}</code>
+      </div>
+    </div>
+    <div class="adm-panel-body">
+      <form method="POST" id="pageForm">
+        <div class="adm-field">
+          <label class="adm-label">Page Title</label>
+          <input type="text" name="title" class="adm-input" value="{{ page.get('title', '') }}"
+                 placeholder="{{ page.slug|replace('-',' ')|title }}" required/>
+        </div>
+
+        <div class="adm-field" style="margin-top:18px">
+          <label class="adm-label">Content <span style="color:var(--adm-muted)">(HTML supported)</span></label>
+
+          <!-- Toolbar -->
+          <div class="adm-editor-toolbar">
+            <button type="button" class="adm-editor-btn" onclick="fmt('bold')" title="Bold"><strong>B</strong></button>
+            <button type="button" class="adm-editor-btn" onclick="fmt('italic')" title="Italic"><em>I</em></button>
+            <button type="button" class="adm-editor-btn" onclick="fmt('underline')" title="Underline"><u>U</u></button>
+            <button type="button" class="adm-editor-btn" onclick="fmt('strikeThrough')" title="Strike">S̶</button>
+            <span style="width:1px;background:var(--adm-border2);margin:0 4px"></span>
+            <button type="button" class="adm-editor-btn" onclick="fmtBlock('h2')" title="Heading 2">H2</button>
+            <button type="button" class="adm-editor-btn" onclick="fmtBlock('h3')" title="Heading 3">H3</button>
+            <button type="button" class="adm-editor-btn" onclick="fmtBlock('p')" title="Paragraph">¶</button>
+            <span style="width:1px;background:var(--adm-border2);margin:0 4px"></span>
+            <button type="button" class="adm-editor-btn" onclick="fmt('insertUnorderedList')" title="Bullet list">• List</button>
+            <button type="button" class="adm-editor-btn" onclick="fmt('insertOrderedList')" title="Numbered list">1. List</button>
+            <span style="width:1px;background:var(--adm-border2);margin:0 4px"></span>
+            <button type="button" class="adm-editor-btn" onclick="insertLink()" title="Link">🔗</button>
+            <button type="button" class="adm-editor-btn" onclick="fmt('removeFormat')" title="Clear format">✕ fmt</button>
+            <span style="width:1px;background:var(--adm-border2);margin:0 4px"></span>
+            <button type="button" class="adm-editor-btn" onclick="toggleMode()" id="modeBtn" title="Toggle HTML/Visual">HTML</button>
+          </div>
+
+          <!-- Visual editor -->
+          <div id="editorVisual" class="adm-editor-area" contenteditable="true" style="border-radius:0 0 var(--adm-radius) var(--adm-radius)">{{ page.get('content','')|safe }}</div>
+          <!-- Raw HTML textarea -->
+          <textarea id="editorRaw" name="content" class="adm-input adm-textarea" rows="16"
+                    style="display:none;font-family:var(--adm-mono);font-size:.78rem;border-radius:0 0 var(--adm-radius) var(--adm-radius)">{{ page.get('content','') }}</textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:20px;align-items:center">
+          <button type="submit" class="adm-btn adm-btn-accent" onclick="syncContent()">💾 Save Page</button>
+          <a href="{{ url_for('admin.pages_list') }}" class="adm-btn adm-btn-ghost">Cancel</a>
+          {% if page.get('updated') %}
+            <span style="font-size:.72rem;color:var(--adm-muted);margin-left:auto;font-family:var(--adm-mono)">
+              Last saved {{ page.get('updated','')[:16]|replace('T',' ') }} by {{ page.get('updated_by','?') }}
+            </span>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- HTML hint -->
+  <div class="adm-alert info">
+    <div>
+      You can write raw HTML in the HTML mode. The content is rendered directly on the public page — so standard HTML tags like <code>&lt;h2&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;ul&gt;</code>, and <code>&lt;a&gt;</code> all work.
+    </div>
+  </div>
+</div>
+
+<script>
+let isRaw = false;
+
+function fmt(cmd) {
+  document.getElementById('editorVisual').focus();
+  document.execCommand(cmd, false, null);
+}
+function fmtBlock(tag) {
+  document.getElementById('editorVisual').focus();
+  document.execCommand('formatBlock', false, tag);
+}
+function insertLink() {
+  const url = prompt('Enter URL:');
+  if (url) { document.getElementById('editorVisual').focus(); document.execCommand('createLink', false, url); }
+}
+function toggleMode() {
+  const vis = document.getElementById('editorVisual');
+  const raw = document.getElementById('editorRaw');
+  const btn = document.getElementById('modeBtn');
+  if (!isRaw) {
+    raw.value = vis.innerHTML;
+    vis.style.display = 'none';
+    raw.style.display = '';
+    btn.textContent = 'Visual';
+    isRaw = true;
+  } else {
+    vis.innerHTML = raw.value;
+    raw.style.display = 'none';
+    vis.style.display = '';
+    btn.textContent = 'HTML';
+    isRaw = false;
+  }
+}
+function syncContent() {
+  const raw = document.getElementById('editorRaw');
+  const vis = document.getElementById('editorVisual');
+  if (isRaw) {
+    raw.name = 'content';
+  } else {
+    raw.value = vis.innerHTML;
+    raw.name = 'content';
+  }
+}
+// Style for visual editor
+document.getElementById('editorVisual').style.cssText += ';min-height:320px;border-top:none;';
+</script>
+
+<style>
+#editorVisual h1,#editorVisual h2,#editorVisual h3 { margin:.6em 0; }
+#editorVisual p { margin:.5em 0; }
+#editorVisual ul,#editorVisual ol { margin:.5em 0 .5em 1.5em; }
+#editorVisual a { color:var(--adm-blue); }
+</style>
+{% endblock %}

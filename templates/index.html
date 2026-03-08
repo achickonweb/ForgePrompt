@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}ForgePrompt{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-grid-bg" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="hero-badge">Open Community · Real Stats · No Fakes</div>
+    <h1 class="hero-title">
+      The Prompt Library<br />
+      <span class="hero-accent">Built for Builders.</span>
+    </h1>
+    <p class="hero-sub">
+      Curated AI prompts for ChatGPT, coding &amp; creative generation.<br />
+      Plus instant dev tools — all in one place. All stats are real.
+    </p>
+    <div class="hero-search-wrap">
+      <div class="search-box hero-search">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="heroSearch"
+               placeholder="Search prompts… e.g. code review, cyberpunk, RPG"
+               autocomplete="off" />
+        <button class="search-btn" onclick="doHeroSearch()">Search</button>
+      </div>
+    </div>
+    <div class="hero-cats">
+      {% for cat in categories %}
+      <a href="/prompts?category={{ cat | urlencode }}" class="cat-chip">{{ cat }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── LIVE STATS (computed server-side, no fake numbers) ── -->
+<section class="stats-bar">
+  <div class="stat-item">
+    <span class="stat-num" data-target="{{ stats.total_prompts }}">0</span>
+    <span class="stat-label">Prompts</span>
+  </div>
+  <div class="stat-divider">|</div>
+  <div class="stat-item">
+    <span class="stat-num" data-target="{{ stats.total_users }}">0</span>
+    <span class="stat-label">Members</span>
+  </div>
+  <div class="stat-divider">|</div>
+  <div class="stat-item">
+    <span class="stat-num" data-target="{{ stats.total_tools }}">0</span>
+    <span class="stat-label">Dev Tools</span>
+  </div>
+  <div class="stat-divider">|</div>
+  <div class="stat-item">
+    <span class="stat-num" data-target="{{ stats.total_upvotes }}">0</span>
+    <span class="stat-label">Upvotes</span>
+  </div>
+  <div class="stat-divider">|</div>
+  <div class="stat-item">
+    <span class="stat-num" data-target="{{ stats.total_views }}">0</span>
+    <span class="stat-label">Total Views</span>
+  </div>
+</section>
+
+<!-- ── POPULAR PROMPTS ── -->
+<section class="section popular-section">
+  {% if potd %}
+  <div class="potd-card">
+    <div class="potd-label">⭐ Prompt of the Day</div>
+    <a href="/prompts/{{ potd.id }}" class="potd-link">
+      <span class="cat-badge cat-{{ potd.category | lower | replace(' ', '-') }}">{{ potd.category }}</span>
+      <h3 class="potd-title">{{ potd.title }}</h3>
+      <p class="potd-preview">{{ potd.text[:180] }}{% if potd.text|length > 180 %}…{% endif %}</p>
+      <span class="potd-meta">by {{ potd.author }} · ▲ {{ potd.upvotes }} · 👁 {{ potd.views }}</span>
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="section-header">
+    <div>
+      <span class="section-tag">// top voted</span>
+      <h2 class="section-title">Popular Prompts</h2>
+    </div>
+    <a href="/prompts" class="see-all-link">View all →</a>
+  </div>
+
+  {% if popular_prompts %}
+  <div class="prompt-grid">
+    {% for p in popular_prompts %}
+      {% include "_prompt_card.html" %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding:40px 0">
+    <div class="empty-icon">∅</div>
+    <h3>No prompts yet</h3>
+    <p>Be the first to submit a prompt!</p>
+    <button class="btn-primary" onclick="openSubmitModal()">Submit a Prompt</button>
+  </div>
+  {% endif %}
+</section>
+
+<!-- ── DEVELOPER TOOLS ── -->
+<section class="section tools-section" style="background:var(--bg2);padding-top:56px;padding-bottom:56px;max-width:100%;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div style="max-width:var(--max-w);margin:0 auto;padding:0 24px">
+    <div class="section-header">
+      <div>
+        <span class="section-tag">// instant utilities</span>
+        <h2 class="section-title">Developer Tools</h2>
+      </div>
+      <a href="/tools" class="see-all-link">All tools →</a>
+    </div>
+    <div class="tools-grid">
+      <a href="/tools/json-formatter" class="tool-card">
+        <div class="tool-icon">{ }</div>
+        <div class="tool-info"><h3>JSON Formatter</h3><p>Prettify, minify and validate JSON instantly</p></div>
+        <span class="tool-arrow">→</span>
+      </a>
+      <a href="/tools/base64" class="tool-card">
+        <div class="tool-icon">64</div>
+        <div class="tool-info"><h3>Base64 Codec</h3><p>Encode and decode Base64 strings in one click</p></div>
+        <span class="tool-arrow">→</span>
+      </a>
+      <a href="/tools/password-generator" class="tool-card">
+        <div class="tool-icon">🔐</div>
+        <div class="tool-info"><h3>Password Generator</h3><p>Generate strong, custom passwords instantly</p></div>
+        <span class="tool-arrow">→</span>
+      </a>
+      <a href="/tools/uuid-generator" class="tool-card">
+        <div class="tool-icon">⊞</div>
+        <div class="tool-info"><h3>UUID Generator</h3><p>Generate RFC 4122 v4 UUIDs on demand</p></div>
+        <span class="tool-arrow">→</span>
+      </a>
+      <a href="/tools/text-counter" class="tool-card">
+        <div class="tool-icon">Σ</div>
+        <div class="tool-info"><h3>Text Counter</h3><p>Count words, chars, sentences and reading time</p></div>
+        <span class="tool-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── REQUEST A PROMPT CTA (Feature 8) ── -->
+{% if current_user %}
+<section class="section" style="padding-top:0;padding-bottom:32px">
+  <div class="request-cta-card">
+    <div class="request-cta-icon">📋</div>
+    <div>
+      <h3>Need a specific prompt?</h3>
+      <p style="color:var(--text-muted);font-size:.88rem;margin:4px 0 12px">Request it and the community will build it for you.</p>
+      <a href="/requests" class="btn-primary btn-sm">Browse Requests →</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <div class="cta-inner">
+    {% if current_user %}
+      <h2>Have a prompt that works?</h2>
+      <p>Share it with the community. Good prompts get upvoted and featured.</p>
+      <button class="btn-primary btn-lg" onclick="openSubmitModal()">Submit your prompt →</button>
+    {% else %}
+      <h2>Join the community</h2>
+      <p>Create a free account to submit prompts, upvote your favourites, and bookmark for later.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="/register" class="btn-primary btn-lg">Sign up free →</a>
+        <a href="/login"    class="btn-ghost btn-lg">Log in</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function doHeroSearch() {
+  const q = document.getElementById('heroSearch').value.trim();
+  if (q) window.location.href = '/prompts?search=' + encodeURIComponent(q);
+}
+document.getElementById('heroSearch').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doHeroSearch();
+});
+
+// Animate stat counters using real server-provided targets
+document.querySelectorAll('.stat-num').forEach(el => {
+  const target = parseInt(el.dataset.target) || 0;
+  if (target === 0) { el.textContent = '0'; return; }
+  const duration = 900;
+  const step = target / (duration / 16);
+  let current = 0;
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = Math.floor(current).toLocaleString();
+    if (current >= target) clearInterval(timer);
+  }, 16);
+});
+</script>
+{% endblock %}

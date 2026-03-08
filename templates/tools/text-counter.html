@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Text Counter{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/tools" class="back-link">← All Tools</a>
+    <h1 class="page-title">Text Counter</h1>
+    <p class="page-sub">Real-time word, character, sentence and reading time analysis.</p>
+  </div>
+</section>
+
+<section class="section tool-section">
+  <div class="tc-stats-bar">
+    <div class="tc-stat"><span class="tc-num" id="wordCount">0</span><span class="tc-lbl">Words</span></div>
+    <div class="tc-stat"><span class="tc-num" id="charCount2">0</span><span class="tc-lbl">Characters</span></div>
+    <div class="tc-stat"><span class="tc-num" id="charNoSpace">0</span><span class="tc-lbl">Chars (no space)</span></div>
+    <div class="tc-stat"><span class="tc-num" id="sentCount">0</span><span class="tc-lbl">Sentences</span></div>
+    <div class="tc-stat"><span class="tc-num" id="paraCount">0</span><span class="tc-lbl">Paragraphs</span></div>
+    <div class="tc-stat"><span class="tc-num" id="readTime">0s</span><span class="tc-lbl">Reading Time</span></div>
+  </div>
+
+  <textarea
+    id="tcInput"
+    class="code-area tc-textarea"
+    placeholder="Paste or type your text here… stats update in real time."
+    oninput="analyzeText()"
+    spellcheck="true"
+    style="height:280px"
+  ></textarea>
+
+  <div class="tc-density-wrap">
+    <div class="pane-label">Top Keywords</div>
+    <div class="tc-keywords" id="tcKeywords">—</div>
+  </div>
+
+  <div class="tool-actions-row">
+    <button class="tool-btn btn-copy-tool" onclick="copyTC()">Copy Text</button>
+    <button class="tool-btn" onclick="clearTC()">Clear</button>
+  </div>
+
+  <div class="tool-tips">
+    <h4>Reading speed assumptions</h4>
+    <ul>
+      <li>Average adult reading speed: <strong>238 words per minute</strong></li>
+      <li>Silent reading used for calculation</li>
+      <li>Keyword frequency excludes common stop words</li>
+    </ul>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const STOP_WORDS = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','is','are','was','were','it','this','that','i','you','he','she','we','they','have','has','had','be','been','being','do','does','did','will','would','could','should','may','might','shall','can','not','as','by','from','up','about','than','then','so','if','its','our','your','my','his','her','their','what','which','who','how','when','where','also']);
+
+function analyzeText() {
+  const raw = document.getElementById('tcInput').value;
+  const words   = raw.trim() ? raw.trim().split(/\s+/) : [];
+  const chars   = raw.length;
+  const noSpace = raw.replace(/\s/g, '').length;
+  const sents   = raw.trim() ? (raw.match(/[.!?]+/g) || []).length || (words.length > 0 ? 1 : 0) : 0;
+  const paras   = raw.trim() ? raw.split(/\n\s*\n/).filter(p => p.trim()).length : 0;
+  const wpm     = 238;
+  const readSec = Math.round((words.length / wpm) * 60);
+  const readStr = readSec < 60
+    ? (readSec || '< 1') + 's'
+    : Math.round(readSec / 60) + 'm ' + (readSec % 60) + 's';
+
+  document.getElementById('wordCount').textContent   = words.length.toLocaleString();
+  document.getElementById('charCount2').textContent  = chars.toLocaleString();
+  document.getElementById('charNoSpace').textContent = noSpace.toLocaleString();
+  document.getElementById('sentCount').textContent   = sents.toLocaleString();
+  document.getElementById('paraCount').textContent   = paras.toLocaleString();
+  document.getElementById('readTime').textContent    = readStr;
+
+  // Top keywords
+  const freq = {};
+  words.forEach(w => {
+    const clean = w.toLowerCase().replace(/[^a-z]/g, '');
+    if (clean.length > 2 && !STOP_WORDS.has(clean)) freq[clean] = (freq[clean] || 0) + 1;
+  });
+  const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, 8);
+  const kw = document.getElementById('tcKeywords');
+  kw.innerHTML = sorted.length
+    ? sorted.map(([w,c]) => `<span class="kw-chip">${w} <em>${c}</em></span>`).join('')
+    : '—';
+}
+
+function copyTC() {
+  const text = document.getElementById('tcInput').value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => showToast('Text copied!'));
+}
+
+function clearTC() {
+  document.getElementById('tcInput').value = '';
+  analyzeText();
+}
+</script>
+{% endblock %}

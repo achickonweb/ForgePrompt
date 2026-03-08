@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Login — ForgePrompt</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}"/>
+</head>
+<body class="adm-body">
+<div class="adm-login-page">
+  <div class="adm-login-box">
+    <div class="adm-login-logo">
+      <span class="logo-bracket">[</span>ForgePrompt<span class="logo-bracket">]</span>
+    </div>
+    <div class="adm-login-sub">Admin Panel — Restricted Access</div>
+
+    {% if error %}
+      <div class="adm-alert error" style="margin-bottom:20px">
+        ⚠ {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('admin.admin_login') }}">
+      <div class="adm-form-group" style="margin-bottom:14px">
+        <label class="adm-label">Username</label>
+        <input type="text" name="username" class="adm-input" placeholder="admin username"
+               autocomplete="username" autofocus required/>
+      </div>
+      <div class="adm-form-group" style="margin-bottom:20px">
+        <label class="adm-label">Password</label>
+        <input type="password" name="password" class="adm-input" placeholder="••••••••"
+               autocomplete="current-password" required/>
+      </div>
+      <button type="submit" class="adm-btn adm-btn-primary" style="width:100%;justify-content:center">
+        Access Admin Panel →
+      </button>
+    </form>
+
+    <div style="margin-top:20px;text-align:center">
+      <a href="/" style="font-size:.75rem;color:var(--adm-muted);text-decoration:none">
+        ← Back to site
+      </a>
+    </div>
+
+    <div style="margin-top:24px;padding:12px;background:var(--adm-bg3);border-radius:6px;border:1px solid var(--adm-border);">
+      <div style="font-family:var(--adm-mono);font-size:.65rem;color:var(--adm-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Default Credentials</div>
+      <div style="font-size:.75rem;color:var(--adm-text)">Set <code style="background:var(--adm-bg);padding:1px 5px;border-radius:3px">ADMIN_USERNAME</code> and <code style="background:var(--adm-bg);padding:1px 5px;border-radius:3px">ADMIN_PASSWORD</code> env vars, or promote a user to admin in the users table.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

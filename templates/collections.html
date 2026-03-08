@@ -1,0 +1,85 @@
+<!-- Feature 3: User collections page -->
+{% extends "base.html" %}
+{% block title %}{{ profile_user.username }}'s Collections{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/profile/{{ profile_user.username }}" class="back-link">← Back to profile</a>
+    <h1 class="page-title">{% if is_own_profile %}My Collections{% else %}{{ profile_user.username }}'s Collections{% endif %}</h1>
+    <p class="page-sub">{{ collections|length }} collection{% if collections|length != 1 %}s{% endif %}</p>
+  </div>
+</section>
+
+<section class="section">
+  {% if is_own_profile %}
+  <div style="margin-bottom:24px">
+    <button class="btn-primary" onclick="document.getElementById('newCollWrap').style.display='block'">+ New Collection</button>
+    <div id="newCollWrap" style="display:none;margin-top:16px" class="settings-card">
+      <div class="form-group">
+        <label>Collection Name</label>
+        <input type="text" id="newColName" placeholder="e.g. My Coding Prompts" maxlength="80" />
+      </div>
+      <div class="form-group">
+        <label>Description <span class="hint">(optional)</span></label>
+        <input type="text" id="newColDesc" placeholder="Short description…" maxlength="300" />
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="newColPublic" checked style="accent-color:var(--accent)" /> Public collection
+        </label>
+      </div>
+      <button class="btn-primary btn-sm" onclick="createNewCol()">Create Collection</button>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if collections %}
+  <div class="collections-grid">
+    {% for c in collections %}
+    <a href="/collection/{{ c.id }}" class="collection-card">
+      <div class="collection-card-top">
+        <h3 class="collection-card-name">{{ c.name }}</h3>
+        {% if not c.get('is_public') %}<span class="model-badge" style="font-size:.6rem">Private</span>{% endif %}
+      </div>
+      {% if c.description %}<p class="collection-card-desc">{{ c.description }}</p>{% endif %}
+      <div class="collection-card-meta">
+        <span>{{ c.get('prompt_ids',[])|length }} prompts</span>
+        <span>{{ c.created }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📁</div>
+    <h3>No collections yet</h3>
+    {% if is_own_profile %}
+    <p>Create a collection to organize your favourite prompts.</p>
+    {% else %}
+    <p>{{ profile_user.username }} hasn't created any public collections yet.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function createNewCol() {
+  var name = document.getElementById('newColName')?.value.trim();
+  if (!name) return showToast('Name required.','error');
+  fetch('/api/collections', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      name: name,
+      description: document.getElementById('newColDesc')?.value.trim() || '',
+      is_public: document.getElementById('newColPublic')?.checked
+    })
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Collection created!'); location.reload(); }
+    else showToast(d.error||'Error','error');
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,189 @@
+<!-- Feature 8: Request detail page with submission flow -->
+{% extends "base.html" %}
+{% block title %}{{ req.title }}{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+  <div class="detail-main">
+    <div class="detail-breadcrumb">
+      <a href="/requests">Requests</a>
+      <span>/</span>
+      <span>{{ req.title[:40] }}{% if req.title|length > 40 %}…{% endif %}</span>
+    </div>
+
+    <div class="detail-header">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="request-status request-status--{{ req.get('status','open') }}" style="font-size:.82rem">{{ req.get('status','open') }}</span>
+        {% if req.get('category') %}<span class="cat-badge cat-{{ req.category | lower | replace(' ', '-') }}">{{ req.category }}</span>{% endif %}
+      </div>
+      <h1 class="detail-title">{{ req.title }}</h1>
+      <div class="detail-meta">
+        <a href="/profile/{{ req.author }}" class="detail-author">
+          <span class="avatar-chip-sm" style="background:var(--accent)">{{ req.author[0].upper() }}</span>
+          {{ req.author }}
+        </a>
+        <span class="detail-date">{{ req.created[:10] }}</span>
+        <span>▲ {{ req.get('upvoted_by',[])|length }} wants</span>
+        <span>{{ req.get('submissions',[])|length }} submissions</span>
+      </div>
+    </div>
+
+    <div class="detail-prompt-box">
+      <div class="detail-prompt-header">
+        <span class="detail-prompt-label">// DESCRIPTION</span>
+      </div>
+      <pre class="detail-prompt-text">{{ req.description }}</pre>
+    </div>
+
+    {% if req.get('bounty') %}
+    <div class="request-bounty" style="margin-bottom:20px">🎁 Bounty: {{ req.bounty }}</div>
+    {% endif %}
+
+    <div class="detail-actions">
+      {% if current_user %}
+      <button class="upvote-btn upvote-btn--lg" id="reqUpvoteBtn"
+              onclick="upvoteRequest('{{ req.id }}', this)">
+        ▲ <span class="upvote-count">{{ req.get('upvoted_by',[])|length }}</span>
+        <span class="upvote-label">Want This</span>
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- Submissions -->
+    <div class="comments-section">
+      <h3 class="comments-title">Submissions <span class="comments-count">{{ req.get('submissions',[])|length }}</span></h3>
+
+      {% for s in req.get('submissions',[]) %}
+      <div class="comment" style="{% if s.accepted %}border-color:var(--accent){% endif %}">
+        <div class="comment-header">
+          <a href="/profile/{{ s.author }}" class="comment-author">
+            <span class="avatar-chip-sm" style="background:var(--accent)">{{ s.author[0].upper() }}</span>
+            {{ s.author }}
+          </a>
+          <span class="comment-date">{{ s.created[:16]|replace('T',' ') }}</span>
+          {% if s.accepted %}<span class="model-badge" style="background:rgba(0,255,136,.15);color:var(--accent)">✓ Accepted</span>{% endif %}
+        </div>
+        {% if s.get('_prompt') %}
+        <div style="margin-top:8px">
+          <a href="/prompts/{{ s.prompt_id }}" style="color:var(--accent);font-weight:700;font-size:.9rem">{{ s._prompt.title }}</a>
+          <p class="card-preview" style="margin-top:4px">{{ s._prompt.text[:200] }}…</p>
+          <span style="font-size:.72rem;color:var(--text-dim)">▲ {{ s._prompt.upvotes }} upvotes</span>
+        </div>
+        {% else %}
+        <p class="comment-text" style="color:var(--text-dim)">Prompt: {{ s.prompt_id }}</p>
+        {% endif %}
+        {% if current_user and current_user.username == req.author and req.get('status') == 'open' and not s.accepted %}
+        <div class="comment-actions">
+          <button class="comment-action-btn" style="color:var(--accent)" onclick="acceptSubmission('{{ req.id }}','{{ s.id }}')">✓ Accept</button>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <!-- Submit form -->
+      {% if current_user and req.get('status') == 'open' %}
+      <div class="settings-card" style="margin-top:24px">
+        <h4 style="margin-bottom:16px;font-size:.95rem">Submit a Prompt</h4>
+
+        <div class="form-group">
+          <label>Link an Existing Prompt</label>
+          <select id="linkPromptSelect">
+            <option value="">— Select one of your prompts —</option>
+            {% for p in user_prompts %}
+            <option value="{{ p.id }}">{{ p.title }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn-primary btn-sm" style="margin-top:8px" onclick="linkExisting('{{ req.id }}')">Link Prompt</button>
+        </div>
+
+        <div style="text-align:center;color:var(--text-dim);font-size:.8rem;margin:16px 0">— or write a new prompt —</div>
+
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="subTitle" placeholder="Prompt title" maxlength="120" />
+        </div>
+        <div class="form-group">
+          <label>Prompt Text</label>
+          <textarea id="subText" rows="6" placeholder="Write your prompt (min 20 chars)…" maxlength="5000"></textarea>
+        </div>
+        <button class="btn-primary btn-sm" onclick="submitNew('{{ req.id }}')">Submit New Prompt</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <aside class="detail-sidebar">
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Request Info</h3>
+      <div class="sidebar-stats">
+        <div class="ss-row"><span>Status</span><strong>{{ req.get('status','open') }}</strong></div>
+        <div class="ss-row"><span>Author</span><a href="/profile/{{ req.author }}">{{ req.author }}</a></div>
+        <div class="ss-row"><span>Created</span><strong>{{ req.created[:10] }}</strong></div>
+        <div class="ss-row"><span>Wants</span><strong>{{ req.get('upvoted_by',[])|length }}</strong></div>
+        <div class="ss-row"><span>Submissions</span><strong>{{ req.get('submissions',[])|length }}</strong></div>
+        {% if req.get('category') %}
+        <div class="ss-row"><span>Category</span><strong>{{ req.category }}</strong></div>
+        {% endif %}
+      </div>
+    </div>
+    {% if req.get('tags') %}
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Tags</h3>
+      <div class="detail-tags">
+        {% for t in req.tags %}<span class="tag">#{{ t }}</span>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function upvoteRequest(reqId, btn) {
+  fetch('/api/requests/' + reqId + '/upvote', {method:'POST'})
+  .then(r => r.json()).then(d => {
+    if (d.upvotes !== undefined) {
+      btn.querySelector('.upvote-count').textContent = d.upvotes;
+      btn.classList.toggle('voted', d.voted);
+      showToast(d.voted ? '▲ Want this!' : 'Removed.');
+    } else showToast(d.error || 'Error', 'error');
+  });
+}
+
+function linkExisting(reqId) {
+  var pid = document.getElementById('linkPromptSelect')?.value;
+  if (!pid) return showToast('Select a prompt.','error');
+  fetch('/api/requests/' + reqId + '/submit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({prompt_id: pid})
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Submitted!'); location.reload(); }
+    else showToast(d.error||'Error','error');
+  });
+}
+
+function submitNew(reqId) {
+  var title = document.getElementById('subTitle')?.value.trim();
+  var text  = document.getElementById('subText')?.value.trim();
+  if (!title) return showToast('Title required.','error');
+  if (!text || text.length < 20) return showToast('Prompt text too short.','error');
+  fetch('/api/requests/' + reqId + '/submit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({title:title, text:text})
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Submitted!'); location.reload(); }
+    else showToast(d.error||'Error','error');
+  });
+}
+
+function acceptSubmission(reqId, subId) {
+  if (!confirm('Accept this submission? This will mark the request as fulfilled.')) return;
+  fetch('/api/requests/' + reqId + '/accept/' + subId, {method:'POST'})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Submission accepted!'); location.reload(); }
+    else showToast(d.error||'Error','error');
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.username }}'s Profile{% endblock %}
+
+{% block content %}
+<section class="profile-hero">
+  <div class="profile-hero-inner">
+    <div class="profile-avatar-lg" style="background:{{ profile_user.avatar_color }}">
+      {{ profile_user.username[0].upper() }}
+    </div>
+    <div class="profile-meta">
+      <h1 class="profile-username">{{ profile_user.username }}</h1>
+      <p class="profile-joined">Member since {{ profile_user.created }}</p>
+      {% if profile_user.bio %}
+        <p class="profile-bio">{{ profile_user.bio }}</p>
+      {% endif %}
+      <div class="profile-counts">
+        <span><strong>{{ user_prompts|length }}</strong> prompts</span>
+        <span>·</span>
+        <span><strong>{{ user_prompts|sum(attribute='upvotes') }}</strong> total upvotes</span>
+        <span>·</span>
+        <span><strong>{{ user_prompts|sum(attribute='views') }}</strong> total views</span>
+        <span>·</span>
+        <span><strong id="followerCount">{{ follower_count }}</strong> followers</span>
+      </div>
+    </div>
+    {% if is_own_profile %}
+      <a href="/settings" class="btn-ghost btn-sm">Edit Profile</a>
+    {% elif current_user %}
+      <button class="btn-primary btn-sm" id="followBtn" onclick="toggleFollow('{{ profile_user.username }}',this)">
+        {% if is_following %}✓ Following{% else %}+ Follow{% endif %}
+      </button>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Tabs -->
+<div class="profile-tabs-wrap">
+  <div class="profile-tabs">
+    <button class="ptab active" onclick="showTab('prompts', this)">
+      Submitted Prompts <span class="tab-count">{{ user_prompts|length }}</span>
+    </button>
+    {% if is_own_profile %}
+    <button class="ptab" onclick="showTab('bookmarks', this)">
+      Bookmarks <span class="tab-count">{{ bookmarked|length }}</span>
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<section class="section">
+  <!-- Submitted prompts tab -->
+  <div id="tab-prompts">
+    {% if user_prompts %}
+      <div class="prompt-grid prompt-grid--full">
+        {% for p in user_prompts %}
+          {% include "_prompt_card.html" %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">∅</div>
+        <h3>No prompts yet</h3>
+        {% if is_own_profile %}
+          <p>You haven't submitted any prompts. Be the first to share one!</p>
+          <button class="btn-primary" onclick="openSubmitModal()">Submit a Prompt</button>
+        {% else %}
+          <p>{{ profile_user.username }} hasn't submitted any prompts yet.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Bookmarks tab (own profile only) -->
+  {% if is_own_profile %}
+  <div id="tab-bookmarks" style="display:none">
+    {% if bookmarked %}
+      <div class="prompt-grid prompt-grid--full">
+        {% for p in bookmarked %}
+          {% include "_prompt_card.html" %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">♡</div>
+        <h3>No bookmarks yet</h3>
+        <p>Click the bookmark icon on any prompt to save it here.</p>
+        <a href="/prompts" class="btn-primary">Browse Prompts</a>
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+  document.getElementById('tab-' + name).style.display = '';
+}
+
+function toggleFollow(username, btn) {
+  fetch('/api/follow/' + username, {method:'POST'})
+  .then(r=>r.json()).then(d=>{
+    if(d.followed!==undefined) {
+      btn.textContent = d.followed ? '✓ Following' : '+ Follow';
+      btn.classList.toggle('btn-ghost', !d.followed);
+      btn.classList.toggle('btn-primary', d.followed);
+      document.getElementById('followerCount').textContent = d.followers_count;
+      showToast(d.followed ? 'Following!' : 'Unfollowed.');
+    } else showToast(d.error||'Error','error');
+  });
+}
+</script>
+{% endblock %}

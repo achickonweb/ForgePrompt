@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ chain.title }}{% endblock %}
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/chains" class="back-link">← Back to chains</a>
+    <h1 class="page-title">{{ chain.title }}</h1>
+    {% if chain.description %}<p class="page-sub">{{ chain.description }}</p>{% endif %}
+    <div style="display:flex;gap:12px;align-items:center;justify-content:center;margin-top:12px;font-size:.82rem;color:var(--text-muted)">
+      <span>By <a href="/profile/{{ chain.owner }}" style="color:var(--accent);font-weight:700">{{ chain.owner }}</a></span>
+      <span>·</span>
+      <span>{{ prompts|length }} steps</span>
+    </div>
+  </div>
+</section>
+<section class="section">
+  {% if is_own %}
+  <div style="margin-bottom:20px;display:flex;gap:10px;justify-content:flex-end">
+    <button class="btn-danger btn-sm" onclick="if(confirm('Delete?'))fetch('/api/chains/{{ chain.id }}',{method:'DELETE'}).then(()=>location.href='/chains')">Delete Chain</button>
+  </div>
+  {% endif %}
+  {% if prompts %}
+  <div class="chain-steps">
+    {% for p in prompts %}
+    <div class="chain-step">
+      <div class="chain-step-num">Step {{ loop.index }}</div>
+      <div class="chain-step-content">
+        <a href="/prompts/{{ p.id }}" class="card-title-link"><h3 class="card-title">{{ p.title }}</h3></a>
+        <p class="card-preview">{{ p.text[:200] }}{% if p.text|length > 200 %}…{% endif %}</p>
+        <div style="font-size:.72rem;color:var(--text-dim);margin-top:8px">▲ {{ p.upvotes }} · 👁 {{ p.views }} · {{ p.category }}</div>
+      </div>
+    </div>
+    {% if not loop.last %}<div class="chain-arrow">↓</div>{% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🔗</div>
+    <h3>No steps yet</h3>
+    <p>Add prompts to this chain from any prompt's detail page.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

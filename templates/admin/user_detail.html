@@ -1,0 +1,183 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ user.username }}{% endblock %}
+{% block page_title %}User: {{ user.username }}{% endblock %}
+{% block breadcrumb_current %}{{ user.username }}{% endblock %}
+{% block breadcrumb %}
+<div class="adm-topbar-breadcrumb">
+  <a href="{{ url_for('admin.dashboard') }}">admin</a> /
+  <a href="{{ url_for('admin.users_list') }}">users</a> /
+  <span>{{ user.username }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="adm-two-col">
+  <!-- Left: User info -->
+  <div>
+    <div class="adm-panel">
+      <div class="adm-panel-body">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+          <div class="adm-user-avatar" style="background:{{ user.avatar_color or '#00ff88' }};width:52px;height:52px;font-size:1.3rem">
+            {{ user.username[0].upper() }}
+          </div>
+          <div>
+            <div style="font-size:1.2rem;font-weight:800">{{ user.username }}</div>
+            <div style="font-family:var(--adm-mono);font-size:.7rem;color:var(--adm-muted)">{{ user.id }}</div>
+            <div style="margin-top:6px;display:flex;gap:4px">
+              {% if user.is_banned %}<span class="adm-badge red">BANNED</span>{% endif %}
+              {% if user.is_admin %}<span class="adm-badge purple">ADMIN</span>
+              {% elif user.is_moderator %}<span class="adm-badge blue">MODERATOR</span>
+              {% else %}<span class="adm-badge gray">USER</span>{% endif %}
+              {% if user.needs_moderation %}<span class="adm-badge yellow">MODQUEUE</span>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-two-col" style="gap:12px;margin-bottom:16px">
+          <div style="background:var(--adm-bg3);border:1px solid var(--adm-border);border-radius:6px;padding:14px;text-align:center">
+            <div style="font-size:1.6rem;font-weight:800">{{ user_prompts|length }}</div>
+            <div style="font-size:.7rem;color:var(--adm-muted);font-family:var(--adm-mono)">PROMPTS</div>
+          </div>
+          <div style="background:var(--adm-bg3);border:1px solid var(--adm-border);border-radius:6px;padding:14px;text-align:center">
+            <div style="font-size:1.6rem;font-weight:800">{{ upvotes_received }}</div>
+            <div style="font-size:.7rem;color:var(--adm-muted);font-family:var(--adm-mono)">UPVOTES REC.</div>
+          </div>
+        </div>
+
+        <div style="font-size:.8rem;color:var(--adm-muted);margin-bottom:6px">Joined</div>
+        <div style="font-family:var(--adm-mono);font-size:.85rem;margin-bottom:12px">{{ user.created }}</div>
+
+        {% if user.bio %}
+          <div style="font-size:.8rem;color:var(--adm-muted);margin-bottom:6px">Bio</div>
+          <div style="font-size:.85rem;margin-bottom:12px">{{ user.bio }}</div>
+        {% endif %}
+
+        {% if user.is_banned and user.banned_reason %}
+          <div class="adm-alert error">
+            <span>⚠</span>
+            <div><strong>Banned:</strong> {{ user.banned_reason }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="adm-panel">
+      <div class="adm-panel-header"><div class="adm-panel-title">Actions</div></div>
+      <div class="adm-panel-body" style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- Ban / Unban -->
+        {% if not user.is_banned %}
+          <form method="POST" action="{{ url_for('admin.ban_user', user_id=user.id) }}"
+                onsubmit="return admConfirmInline('Ban this user?', this)">
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <input type="text" name="reason" class="adm-input" placeholder="Ban reason (optional)" style="flex:1"/>
+              <button class="adm-btn adm-btn-danger">🚫 Ban</button>
+            </div>
+          </form>
+        {% else %}
+          <form method="POST" action="{{ url_for('admin.unban_user', user_id=user.id) }}">
+            <button class="adm-btn adm-btn-primary" style="width:100%">✓ Unban User</button>
+          </form>
+        {% endif %}
+
+        <!-- Moderation queue -->
+        <form method="POST" action="{{ url_for('admin.toggle_modqueue', user_id=user.id) }}">
+          <button class="adm-btn {% if user.needs_moderation %}adm-btn-warning{% else %}adm-btn-ghost{% endif %}" style="width:100%">
+            {% if user.needs_moderation %}⏳ Remove from Mod Queue{% else %}⏳ Add to Mod Queue{% endif %}
+          </button>
+        </form>
+
+        <!-- Promote -->
+        {% if not user.is_admin and not user.is_moderator %}
+          <form method="POST" action="{{ url_for('admin.promote_user', user_id=user.id) }}">
+            <div style="display:flex;gap:8px">
+              <select name="role" class="adm-select" style="flex:1">
+                <option value="moderator">Moderator</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button class="adm-btn adm-btn-purple">⬆ Promote</button>
+            </div>
+          </form>
+        {% else %}
+          <form method="POST" action="{{ url_for('admin.demote_user', user_id=user.id) }}"
+                onsubmit="return admConfirmInline('Demote this user to regular user?', this)">
+            <button class="adm-btn adm-btn-ghost" style="width:100%">⬇ Demote to User</button>
+          </form>
+        {% endif %}
+
+        <hr class="adm-divider"/>
+
+        <!-- Delete -->
+        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}"
+              onsubmit="return admConfirmInline('PERMANENTLY delete this user? This cannot be undone!', this)"
+              id="deleteUserForm">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <input type="checkbox" name="delete_prompts" value="1" class="adm-checkbox" id="delPrompts"/>
+            <label for="delPrompts" style="font-size:.8rem;cursor:pointer">Also delete all their prompts</label>
+          </div>
+          <button type="submit" class="adm-btn adm-btn-danger" style="width:100%">🗑 Delete Account</button>
+        </form>
+
+        <a href="/profile/{{ user.username }}" target="_blank" class="adm-btn adm-btn-ghost" style="width:100%;justify-content:center">
+          👤 View Public Profile ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Prompts -->
+  <div>
+    <div class="adm-panel">
+      <div class="adm-panel-header">
+        <div class="adm-panel-title">Prompts ({{ user_prompts|length }})</div>
+      </div>
+      {% if user_prompts %}
+        <div class="adm-table-wrap">
+          <table class="adm-table">
+            <thead>
+              <tr><th>Title</th><th>Category</th><th>Status</th><th>Views</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for p in user_prompts %}
+                <tr>
+                  <td style="max-width:200px">
+                    <div style="font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                      {{ p.title }}
+                    </div>
+                    <div style="font-size:.68rem;color:var(--adm-muted);font-family:var(--adm-mono)">{{ p.id }}</div>
+                  </td>
+                  <td class="cell-muted" style="font-size:.78rem">{{ p.category }}</td>
+                  <td>
+                    {% set s = p.get('status','published') %}
+                    <span class="adm-badge {% if s=='published' %}green{% elif s=='pending' %}yellow{% else %}red{% endif %}">
+                      {{ s }}
+                    </span>
+                    {% if p.get('pinned') %}<span class="adm-badge blue">📌</span>{% endif %}
+                  </td>
+                  <td class="cell-muted">{{ p.get('views',0) }}</td>
+                  <td>
+                    <div style="display:flex;gap:4px">
+                      <a href="{{ url_for('admin.admin_edit_prompt', prompt_id=p.id) }}"
+                         class="adm-btn adm-btn-ghost adm-btn-xs">Edit</a>
+                      <form method="POST" action="{{ url_for('admin.admin_delete_prompt', prompt_id=p.id) }}"
+                            onsubmit="return admConfirmInline('Delete this prompt?',this)">
+                        <button class="adm-btn adm-btn-danger adm-btn-xs">Del</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="adm-empty">
+          <div class="adm-empty-icon">📝</div>
+          <div class="adm-empty-title">No prompts</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

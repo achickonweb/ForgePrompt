@@ -1,0 +1,223 @@
+[
+  {
+    "id": "p001",
+    "title": "Senior Code Reviewer",
+    "category": "Coding",
+    "text": "Act as a senior software engineer conducting a thorough code review. Analyze the following code for: 1) Security vulnerabilities, 2) Performance bottlenecks, 3) Code smells and anti-patterns, 4) Adherence to SOLID principles, 5) Test coverage gaps. For each issue found, explain WHY it's a problem and provide a refactored version. Be specific, cite line numbers, and prioritize issues by severity (Critical / High / Medium / Low).\n\nCode to review:\n[PASTE CODE HERE]",
+    "tags": [
+      "code-review",
+      "security",
+      "refactoring",
+      "best-practices"
+    ],
+    "upvoted_by": [],
+    "views": 5,
+    "author": "devmaster",
+    "created": "2024-11-10",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p002",
+    "title": "Cinematic Scene Generator",
+    "category": "Image Generation",
+    "text": "A cinematic ultra-wide shot of [SUBJECT], dramatic volumetric lighting, golden hour, lens flare, shallow depth of field, shot on ARRI Alexa, anamorphic lens, film grain, color graded in DaVinci Resolve, [MOOD] atmosphere, photorealistic, 8K resolution, award-winning photography, National Geographic style",
+    "tags": [
+      "cinematic",
+      "photography",
+      "lighting",
+      "photorealistic"
+    ],
+    "upvoted_by": [],
+    "views": 5,
+    "author": "vizartist",
+    "created": "2024-10-22",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p003",
+    "title": "Socratic Debate Partner",
+    "category": "ChatGPT",
+    "text": "You are a Socratic debate partner. Your role is NOT to give me answers, but to challenge my thinking through probing questions. When I present an argument or idea, respond by: 1) Identifying the core assumption I'm making, 2) Asking one sharp question that exposes a potential weakness or contradiction, 3) Offering a steel-manned version of the opposing view. Never let me off easy. Push until my reasoning is airtight or I discover a flaw myself. Topic: [YOUR TOPIC]",
+    "tags": [
+      "debate",
+      "critical-thinking",
+      "philosophy",
+      "socratic"
+    ],
+    "upvoted_by": [],
+    "views": 1,
+    "author": "philosophia",
+    "created": "2024-12-01",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p004",
+    "title": "Indie Game Concept Creator",
+    "category": "Game Development",
+    "text": "Design a complete indie game concept document with the following structure:\n- **Core Loop**: The 30-second gameplay loop that keeps players hooked\n- **Unique Mechanic**: One mechanic that hasn't been done before (or done poorly)\n- **Art Direction**: Visual style, palette, references\n- **Narrative Hook**: The premise in one sentence\n- **Monetization**: Ethical model that fits the game\n- **Scope Assessment**: Realistic 1-person dev timeline\n- **Risk Factors**: What could kill this project\n\nGenre/theme I want to explore: [YOUR GENRE/THEME]",
+    "tags": [
+      "game-design",
+      "indie",
+      "concept",
+      "GDD"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "pixelsmith",
+    "created": "2024-09-15",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p005",
+    "title": "Viral Short-Form Video Script",
+    "category": "Video Generation",
+    "text": "Write a 60-second viral video script optimized for TikTok/Reels. Structure:\n[0-3s] HOOK: Start mid-action or with a controversial/surprising statement that forces people to stop scrolling.\n[3-15s] TENSION: Build curiosity. Don't resolve it yet. Use pattern interrupts.\n[15-45s] VALUE: Deliver the actual content in rapid, digestible chunks. One idea per 5 seconds.\n[45-55s] PAYOFF: Resolve the hook. Surprise or exceed expectations.\n[55-60s] CTA: One clear action. No options.\n\nTopic: [YOUR TOPIC]\nTarget audience: [AUDIENCE]\nDesired emotion: [EMOTION - curiosity/surprise/inspiration/humor]",
+    "tags": [
+      "video",
+      "tiktok",
+      "viral",
+      "script",
+      "short-form"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "viralvault",
+    "created": "2024-11-28",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p006",
+    "title": "SQL Query Optimizer",
+    "category": "Coding",
+    "text": "You are a database performance expert. Analyze and optimize the following SQL query:\n\n[PASTE QUERY]\n\nDatabase: [PostgreSQL/MySQL/SQLite/etc]\nTable sizes: [approximate row counts]\nCurrent execution time: [if known]\n\nProvide:\n1. Diagnosis of performance issues with EXPLAIN output analysis\n2. Optimized query with comments explaining each change\n3. Recommended indexes (with CREATE INDEX statements)\n4. Alternative approaches if a rewrite would be significantly faster\n5. Trade-offs for each suggestion",
+    "tags": [
+      "sql",
+      "database",
+      "performance",
+      "optimization",
+      "indexing"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "queryking",
+    "created": "2024-10-08",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p007",
+    "title": "Cyberpunk Portrait",
+    "category": "Image Generation",
+    "text": "Cyberpunk portrait of [SUBJECT], neon-lit rain-soaked alley, reflective wet pavement, holographic advertisements in background, augmented reality implants, leather jacket with LED strips, neon pink and electric blue color palette, cinematic lighting, 4K hyperrealistic digital art, blade runner 2049 aesthetic, sharp focus, bokeh background",
+    "tags": [
+      "cyberpunk",
+      "portrait",
+      "neon",
+      "sci-fi",
+      "digital-art"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "neoncraft",
+    "created": "2024-08-30",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p008",
+    "title": "First-Person Narrative Game",
+    "category": "Game Development",
+    "text": "You are an AI game master running a text-based first-person adventure. Rules:\n- Describe scenes in vivid 2-3 sentence bursts\n- Always end with exactly 3 numbered choices\n- Track: [Health: 100] [Inventory: empty] [Location: START]\n- Choices have hidden consequences based on stats\n- Introduce NPCs with distinct voices and agendas\n- Build tension through environmental storytelling\n\nSetting: [POST-APOCALYPTIC/FANTASY/SCI-FI/NOIR]\nDifficulty: [EASY/NORMAL/BRUTAL]\n\nBegin the adventure.",
+    "tags": [
+      "text-adventure",
+      "RPG",
+      "interactive-fiction",
+      "game-master"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "dungeonai",
+    "created": "2024-12-10",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p009",
+    "title": "Startup Pitch Deck Critic",
+    "category": "ChatGPT",
+    "text": "Act as a seasoned VC partner who has seen 10,000 pitches. Be brutally honest but constructive. Review my startup pitch and respond with:\n\n**The 60-Second Verdict**: Would you take the next meeting? Why/why not in plain language.\n\n**Slide-by-Slide Teardown**: For each section, rate 1-10 and explain exactly what's weak.\n\n**The Hard Questions**: 5 questions a skeptical investor WILL ask that I'm not prepared for.\n\n**What's Missing**: Critical information I forgot to include.\n\n**The Fix**: Top 3 changes that would most improve fundability.\n\nMy pitch: [PASTE PITCH DECK TEXT OR SUMMARY]",
+    "tags": [
+      "startup",
+      "pitch",
+      "VC",
+      "fundraising",
+      "business"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "founderhq",
+    "created": "2024-11-05",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p010",
+    "title": "Anime Landscape Scene",
+    "category": "Image Generation",
+    "text": "Breathtaking anime landscape, [SETTING: floating islands/ancient ruins/futuristic city/enchanted forest], Studio Ghibli inspired art style, painted sky with dramatic clouds, golden sunlight rays, lush vegetation, small human figure for scale, peaceful and majestic atmosphere, Makoto Shinkai color palette, ultra-detailed, 4K anime wallpaper quality",
+    "tags": [
+      "anime",
+      "landscape",
+      "ghibli",
+      "shinkai",
+      "wallpaper"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "animecraft",
+    "created": "2024-09-02",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p011",
+    "title": "API Documentation Writer",
+    "category": "Coding",
+    "text": "Write comprehensive API documentation for the following endpoint/function. Use this exact structure:\n\n## Endpoint Name\n**Method & URL**: \n**Description**: One clear sentence.\n\n### Parameters\n| Name | Type | Required | Description | Example |\n\n### Request Example\n```\n[curl/code example]\n```\n\n### Response Schema\n[JSON structure with type annotations]\n\n### Response Examples\n[Success 200, Error 400, Error 401, Error 500]\n\n### Notes & Edge Cases\n[Gotchas, rate limits, deprecation warnings]\n\nEndpoint to document: [PASTE CODE OR DESCRIPTION]",
+    "tags": [
+      "documentation",
+      "API",
+      "technical-writing",
+      "REST"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "docsmith",
+    "created": "2024-10-19",
+    "comments": [],
+    "test_results": []
+  },
+  {
+    "id": "p012",
+    "title": "Documentary-Style Video Prompt",
+    "category": "Video Generation",
+    "text": "Create a cinematic documentary-style video prompt for AI generation:\n\nScene: Slow push-in shot of [SUBJECT/LOCATION], handheld camera with subtle shake, natural ambient sound, [TIME OF DAY] lighting, subject-to-camera interview style cut with B-roll of [RELATED ACTIVITY], muted earth tones, PBS/BBC documentary aesthetic, 24fps film look, subtle film grain overlay\n\nNarration style: [HUSHED/AUTHORITATIVE/CURIOUS]\nMood: [CONTEMPLATIVE/URGENT/WONDROUS]\nDuration: [30s/60s/90s]",
+    "tags": [
+      "documentary",
+      "video-prompt",
+      "cinematic",
+      "AI-video"
+    ],
+    "upvoted_by": [],
+    "views": 0,
+    "author": "framecraft",
+    "created": "2024-11-15",
+    "comments": [],
+    "test_results": []
+  }
+]

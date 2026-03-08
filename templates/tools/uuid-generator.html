@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}UUID Generator{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/tools" class="back-link">← All Tools</a>
+    <h1 class="page-title">UUID Generator</h1>
+    <p class="page-sub">Generate RFC 4122 v4 UUIDs instantly. Client-side — cryptographically random.</p>
+  </div>
+</section>
+
+<section class="section tool-section">
+  <div class="uuid-hero-output">
+    <div class="uuid-display" id="mainUUID">—</div>
+    <div class="uuid-actions-inline">
+      <button class="pw-copy-btn" onclick="copyMain()" title="Copy">⎘</button>
+      <button class="pw-refresh-btn" onclick="refreshMain()" title="Regenerate">↺</button>
+    </div>
+  </div>
+
+  <div class="uuid-options">
+    <div class="option-row">
+      <label>Format:</label>
+      <select id="uuidFormat" onchange="refreshMain()">
+        <option value="standard">Standard (8-4-4-4-12)</option>
+        <option value="uppercase">Uppercase</option>
+        <option value="no-hyphens">No Hyphens</option>
+        <option value="braces">With Braces {UUID}</option>
+        <option value="urn">URN urn:uuid:UUID</option>
+      </select>
+    </div>
+
+    <div class="option-row">
+      <label>Bulk quantity:</label>
+      <input type="number" id="uuidCount" min="1" max="100" value="10" style="width:80px" />
+      <button class="tool-btn" onclick="generateBulkUUIDs()">Generate Bulk</button>
+    </div>
+  </div>
+
+  <div class="uuid-bulk-wrap" id="uuidBulkWrap" style="display:none">
+    <div class="pane-label">
+      Bulk UUIDs
+      <button class="tool-btn btn-copy-tool" style="float:right;margin-top:-4px" onclick="copyAllUUIDs()">Copy All</button>
+    </div>
+    <div class="uuid-bulk-list" id="uuidBulkList"></div>
+  </div>
+
+  <div class="tool-tips">
+    <h4>About UUID v4</h4>
+    <ul>
+      <li>UUID v4 uses random/pseudo-random numbers, giving 2<sup>122</sup> possible values</li>
+      <li>Collision probability is astronomically low (~1 in 5.3×10<sup>36</sup>)</li>
+      <li>Widely used for database primary keys, session tokens, and distributed IDs</li>
+      <li>RFC 4122 standard: <code>xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx</code></li>
+    </ul>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function uuidv4() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+
+function applyFormat(uuid) {
+  const fmt = document.getElementById('uuidFormat').value;
+  switch(fmt) {
+    case 'uppercase':   return uuid.toUpperCase();
+    case 'no-hyphens':  return uuid.replace(/-/g, '');
+    case 'braces':      return `{${uuid}}`;
+    case 'urn':         return `urn:uuid:${uuid}`;
+    default:            return uuid;
+  }
+}
+
+function refreshMain() {
+  document.getElementById('mainUUID').textContent = applyFormat(uuidv4());
+}
+
+function copyMain() {
+  const text = document.getElementById('mainUUID').textContent;
+  if (text === '—') return;
+  navigator.clipboard.writeText(text).then(() => showToast('UUID copied!'));
+}
+
+function generateBulkUUIDs() {
+  const count = Math.min(parseInt(document.getElementById('uuidCount').value) || 10, 100);
+  const list = document.getElementById('uuidBulkList');
+  list.innerHTML = '';
+  const uuids = [];
+  for (let i = 0; i < count; i++) {
+    const u = applyFormat(uuidv4());
+    uuids.push(u);
+    const row = document.createElement('div');
+    row.className = 'bulk-pw-row';
+    row.innerHTML = `<span class="mono-text">${u}</span><button onclick="navigator.clipboard.writeText('${u}').then(()=>showToast('Copied!'))">⎘</button>`;
+    list.appendChild(row);
+  }
+  document.getElementById('uuidBulkWrap').style.display = 'block';
+  list.dataset.uuids = JSON.stringify(uuids);
+}
+
+function copyAllUUIDs() {
+  const list = document.getElementById('uuidBulkList');
+  const uuids = JSON.parse(list.dataset.uuids || '[]');
+  if (!uuids.length) return;
+  navigator.clipboard.writeText(uuids.join('\n')).then(() => showToast(`${uuids.length} UUIDs copied!`));
+}
+
+// Init
+refreshMain();
+</script>
+{% endblock %}

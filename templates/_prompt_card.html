@@ -1,0 +1,51 @@
+<!-- What I changed (Features 4, 8): Added model badge and fulfills_request badge -->
+<article class="prompt-card prompt-card--full" data-id="{{ p.id }}">
+  <div class="card-top">
+    <span class="cat-badge cat-{{ p.category | lower | replace(' ', '-') }}">{{ p.category }}</span>
+    {% if p.get('model') %}
+    <span class="model-badge">{{ p.model }}</span>
+    {% endif %}
+    <div class="card-meta-right">
+      <span class="card-views">👁 {{ p.views }}</span>
+      <a href="/profile/{{ p.author }}" class="card-author" onclick="event.stopPropagation()">{{ p.author }}</a>
+      <span class="card-date">{{ p.created }}</span>
+    </div>
+  </div>
+  <a href="/prompts/{{ p.id }}" class="card-title-link">
+    <h3 class="card-title">{{ p.title }}</h3>
+  </a>
+  {% if p.get('fulfills_request') %}
+  <a href="/requests/{{ p.fulfills_request }}" class="fulfills-badge" onclick="event.stopPropagation()">✓ Fulfills a request</a>
+  {% endif %}
+  <p class="card-preview">{{ p.text[:160] }}{% if p.text|length > 160 %}…{% endif %}</p>
+  <div class="card-tags">
+    {% for tag in p.tags[:4] %}
+    <a href="/prompts?tag={{ tag }}" class="tag" onclick="event.stopPropagation()">#{{ tag }}</a>
+    {% endfor %}
+  </div>
+  <div class="card-footer">
+    <button class="upvote-btn {% if p.user_voted %}voted{% endif %}"
+            onclick="upvote('{{ p.id }}', this)"
+            title="{% if not current_user %}Log in to upvote{% endif %}">
+      ▲ <span class="upvote-count">{{ p.upvotes }}</span>
+    </button>
+    <div class="card-actions-right">
+      <button class="bookmark-btn {% if p.user_bookmarked %}bookmarked{% endif %}"
+              onclick="toggleBookmark('{{ p.id }}', this)"
+              title="{% if not current_user %}Log in to bookmark{% endif %}">
+        {% if p.user_bookmarked %}♥{% else %}♡{% endif %}
+      </button>
+      <button class="copy-btn" data-text="{{ p.text | e }}"
+              onclick="copyFromAttr(this)">Copy</button>
+    </div>
+  </div>
+  {% if current_user and current_user.username == p.author %}
+  <div class="card-owner-actions">
+    <a href="/prompts/{{ p.id }}/edit" class="owner-btn">Edit</a>
+    <form method="POST" action="/prompts/{{ p.id }}/delete" style="display:inline"
+          onsubmit="return confirm('Delete this prompt? This cannot be undone.')">
+      <button type="submit" class="owner-btn owner-btn--danger">Delete</button>
+    </form>
+  </div>
+  {% endif %}
+</article>

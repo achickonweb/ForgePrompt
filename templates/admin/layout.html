@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{% block title %}Admin{% endblock %} — ForgePrompt Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="adm-body">
+
+<div class="adm-layout">
+  <!-- ── Sidebar ── -->
+  <aside class="adm-sidebar" id="admSidebar">
+    <div class="adm-sidebar-logo">
+      <div>
+        <div class="logo-text"><span class="logo-bracket">[</span>FP<span class="logo-bracket">]</span></div>
+      </div>
+      <span class="adm-admin-badge">ADMIN</span>
+    </div>
+
+    <div class="adm-sidebar-section">
+      <span class="adm-sidebar-label">Overview</span>
+      <a href="{{ url_for('admin.dashboard') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+        <span class="nav-icon">⬡</span> Dashboard
+      </a>
+      <a href="{{ url_for('admin.analytics') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.analytics' %}active{% endif %}">
+        <span class="nav-icon">📈</span> Analytics
+      </a>
+    </div>
+
+    <div class="adm-sidebar-section">
+      <span class="adm-sidebar-label">Users</span>
+      <a href="{{ url_for('admin.users_list') }}"
+         class="adm-nav-link {% if 'users' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">👥</span> Users
+      </a>
+    </div>
+
+    <div class="adm-sidebar-section">
+      <span class="adm-sidebar-label">Content</span>
+      <a href="{{ url_for('admin.admin_prompts') }}"
+         class="adm-nav-link {% if 'prompt' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">📝</span> Prompts
+        {% if pending_count is defined and pending_count %}
+          <span class="adm-nav-badge badge-yellow">{{ pending_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('admin.reports') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+        <span class="nav-icon">🚩</span> Reports
+        {% if open_reports_count is defined and open_reports_count %}
+          <span class="adm-nav-badge">{{ open_reports_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('admin.categories_page') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.categories_page' %}active{% endif %}">
+        <span class="nav-icon">🗂</span> Categories
+      </a>
+      <a href="{{ url_for('admin.tags_page') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.tags_page' %}active{% endif %}">
+        <span class="nav-icon">🏷</span> Tags
+      </a>
+      <a href="{{ url_for('admin.announcements') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.announcements' %}active{% endif %}">
+        <span class="nav-icon">📢</span> Announcements
+      </a>
+      <a href="{{ url_for('admin.admin_requests') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.admin_requests' %}active{% endif %}">
+        <span class="nav-icon">📋</span> Requests
+      </a>
+      <a href="{{ url_for('admin.pages_list') }}"
+         class="adm-nav-link {% if 'page' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">📄</span> Pages
+      </a>
+    </div>
+
+    <div class="adm-sidebar-section">
+      <span class="adm-sidebar-label">Security</span>
+      <a href="{{ url_for('admin.audit_log_page') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.audit_log_page' %}active{% endif %}">
+        <span class="nav-icon">🔍</span> Audit Log
+      </a>
+      <a href="{{ url_for('admin.integrity') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.integrity' %}active{% endif %}">
+        <span class="nav-icon">🛡</span> Integrity
+      </a>
+      <a href="{{ url_for('admin.export_page') }}"
+         class="adm-nav-link {% if request.endpoint == 'admin.export_page' %}active{% endif %}">
+        <span class="nav-icon">⬇</span> Export
+      </a>
+    </div>
+
+    <div class="adm-sidebar-footer">
+      <div class="adm-user-chip">
+        <div class="adm-avatar">{{ adm.username[0].upper() }}</div>
+        <div>
+          <div class="adm-user-name">{{ adm.username }}</div>
+          <div class="adm-user-role">
+            {% if adm.get('is_admin') or adm.id == '__env_admin__' %}superadmin{% else %}moderator{% endif %}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <a href="/" class="adm-btn adm-btn-ghost adm-btn-sm" style="flex:1;justify-content:center">← Site</a>
+        <a href="{{ url_for('admin.admin_logout') }}" class="adm-btn adm-btn-danger adm-btn-sm">Out</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="adm-main">
+    <div class="adm-topbar">
+      <div>
+        <div class="adm-topbar-title">{% block page_title %}Admin{% endblock %}</div>
+        {% block breadcrumb %}
+        <div class="adm-topbar-breadcrumb">
+          <a href="{{ url_for('admin.dashboard') }}">admin</a> /
+          <span>{% block breadcrumb_current %}dashboard{% endblock %}</span>
+        </div>
+        {% endblock %}
+      </div>
+      <div class="adm-topbar-actions">
+        {% block topbar_actions %}{% endblock %}
+      </div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="adm-flash-container">
+          {% for cat, msg in messages %}
+            <div class="adm-flash {{ cat }}">
+              {{ msg }}
+              <button class="adm-flash-close" onclick="this.parentElement.remove()">✕</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="adm-content">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-dismiss flashes
+setTimeout(() => {
+  document.querySelectorAll('.adm-flash').forEach(el => {
+    el.style.opacity = '0'; el.style.transition = 'opacity .4s';
+    setTimeout(() => el.remove(), 400);
+  });
+}, 4000);
+
+// Confirm-delete helpers
+function admConfirm(msg, formId) {
+  if (confirm(msg)) document.getElementById(formId).submit();
+}
+function admConfirmInline(msg, el) {
+  if (confirm(msg)) el.closest('form').submit();
+  return false;
+}
+
+// Select-all checkboxes
+function toggleAll(cb) {
+  document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+  updateBulkBar();
+}
+function updateBulkBar() {
+  const checked = document.querySelectorAll('.row-check:checked').length;
+  const bar = document.getElementById('bulkBar');
+  if (bar) {
+    bar.style.display = checked > 0 ? 'flex' : 'none';
+    const cnt = document.getElementById('bulkCount');
+    if (cnt) cnt.textContent = checked + ' selected';
+  }
+}
+document.addEventListener('change', e => {
+  if (e.target.classList.contains('row-check')) updateBulkBar();
+});
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

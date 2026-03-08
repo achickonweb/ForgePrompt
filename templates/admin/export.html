@@ -1,0 +1,65 @@
+{% extends "admin/layout.html" %}
+{% block title %}Export{% endblock %}
+{% block page_title %}Data Export{% endblock %}
+{% block breadcrumb_current %}export{% endblock %}
+
+{% block content %}
+<div class="adm-content-narrow">
+  <div class="adm-alert warning" style="margin-bottom:24px">
+    ⚠ <strong>Sensitive data.</strong> Exports contain non-public information. Handle files securely and do not share them.
+  </div>
+
+  <div class="adm-two-col">
+    <!-- Prompts -->
+    <div class="adm-panel">
+      <div class="adm-panel-header"><div class="adm-panel-title">📝 Prompts Export</div></div>
+      <div class="adm-panel-body">
+        <div style="text-align:center;padding:16px 0">
+          <div style="font-size:2.5rem;font-weight:800;font-family:var(--adm-mono)">{{ prompt_count }}</div>
+          <div style="font-size:.78rem;color:var(--adm-muted);margin-top:4px">prompts in database</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="{{ url_for('admin.export_prompts_csv') }}" class="adm-btn adm-btn-accent" style="justify-content:center">
+            ⬇ Download CSV
+          </a>
+          <a href="{{ url_for('admin.export_prompts_json') }}" class="adm-btn adm-btn-ghost" style="justify-content:center">
+            ⬇ Download JSON
+          </a>
+        </div>
+        <div style="margin-top:14px;font-size:.72rem;color:var(--adm-muted)">
+          CSV includes: id, title, category, author, created, views, upvotes, status, tags, text.<br/>
+          JSON includes all raw data.
+        </div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="adm-panel">
+      <div class="adm-panel-header"><div class="adm-panel-title">👥 Users Export</div></div>
+      <div class="adm-panel-body">
+        <div style="text-align:center;padding:16px 0">
+          <div style="font-size:2.5rem;font-weight:800;font-family:var(--adm-mono)">{{ user_count }}</div>
+          <div style="font-size:.78rem;color:var(--adm-muted);margin-top:4px">registered users</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="{{ url_for('admin.export_users_csv') }}" class="adm-btn adm-btn-blue" style="justify-content:center">
+            ⬇ Download CSV
+          </a>
+          <a href="{{ url_for('admin.export_users_json') }}" class="adm-btn adm-btn-ghost" style="justify-content:center">
+            ⬇ Download JSON
+          </a>
+        </div>
+        <div style="margin-top:14px;font-size:.72rem;color:var(--adm-muted)">
+          CSV includes: id, username, created, is_admin, is_moderator, is_banned, needs_moderation.<br/>
+          Password hashes are <strong>excluded</strong> from all exports.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export log note -->
+  <div class="adm-alert info">
+    All downloads are logged in the audit trail with the admin's username and timestamp.
+  </div>
+</div>
+{% endblock %}

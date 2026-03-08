@@ -1,0 +1,111 @@
+{% extends "admin/layout.html" %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}Category Management{% endblock %}
+{% block breadcrumb_current %}categories{% endblock %}
+
+{% block content %}
+<div class="adm-two-col">
+  <!-- Left: category list -->
+  <div class="adm-panel">
+    <div class="adm-panel-header">
+      <div class="adm-panel-title">All Categories</div>
+      <span style="font-size:.75rem;color:var(--adm-muted);font-family:var(--adm-mono)">{{ categories|length }} total</span>
+    </div>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Prompts</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cat in categories %}
+          <tr>
+            <td style="font-weight:700">{{ cat.name }}</td>
+            <td class="cell-mono">{{ cat.count }}</td>
+            <td>
+              <div style="display:flex;gap:6px;align-items:center">
+                <!-- Rename -->
+                <button class="adm-btn adm-btn-ghost adm-btn-xs"
+                        onclick="openRename('{{ cat.name | replace("'","\\'")|e }}')">✏ Rename</button>
+                <!-- Delete -->
+                <form method="POST" action="{{ url_for('admin.delete_category') }}"
+                      onsubmit="return confirm('Remove category \'{{ cat.name }}\'? Prompts keep their old category value.')">
+                  <input type="hidden" name="name" value="{{ cat.name }}"/>
+                  <button type="submit" class="adm-btn adm-btn-danger adm-btn-xs">✕</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right: actions -->
+  <div>
+    <!-- Add new -->
+    <div class="adm-panel">
+      <div class="adm-panel-header"><div class="adm-panel-title">Add Category</div></div>
+      <div class="adm-panel-body">
+        <form method="POST" action="{{ url_for('admin.add_category') }}">
+          <div class="adm-field">
+            <label class="adm-label">Category Name</label>
+            <input type="text" name="name" class="adm-input" placeholder="e.g. Business Writing" required maxlength="60"/>
+          </div>
+          <button type="submit" class="adm-btn adm-btn-accent" style="margin-top:14px;width:100%">+ Add Category</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Rename modal trigger area -->
+    <div class="adm-panel" id="renamePanel" style="display:none">
+      <div class="adm-panel-header"><div class="adm-panel-title">Rename Category</div></div>
+      <div class="adm-panel-body">
+        <form method="POST" action="{{ url_for('admin.rename_category') }}">
+          <input type="hidden" name="old_name" id="renameOld"/>
+          <div class="adm-field">
+            <label class="adm-label">Renaming</label>
+            <div id="renameOldDisplay" style="font-weight:700;padding:8px 0;color:var(--adm-blue)"></div>
+          </div>
+          <div class="adm-field" style="margin-top:12px">
+            <label class="adm-label">New Name</label>
+            <input type="text" name="new_name" id="renameNew" class="adm-input" required maxlength="60"/>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button type="submit" class="adm-btn adm-btn-accent">Rename</button>
+            <button type="button" class="adm-btn adm-btn-ghost" onclick="closeRename()">Cancel</button>
+          </div>
+          <div style="margin-top:10px;font-size:.72rem;color:var(--adm-muted)">
+            ⚠ All prompts in this category will be updated automatically.
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Info card -->
+    <div class="adm-alert info">
+      <div>
+        <strong>Category changes</strong><br/>
+        Renaming updates all existing prompts. Deleting a category does <em>not</em> delete its prompts — they retain the old value until reassigned.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openRename(name) {
+  document.getElementById('renameOld').value = name;
+  document.getElementById('renameOldDisplay').textContent = name;
+  document.getElementById('renameNew').value = name;
+  document.getElementById('renamePanel').style.display = '';
+  document.getElementById('renameNew').focus();
+}
+function closeRename() {
+  document.getElementById('renamePanel').style.display = 'none';
+}
+</script>
+{% endblock %}

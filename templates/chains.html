@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Prompt Chains{% endblock %}
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <span class="section-tag">// workflows</span>
+    <h1 class="page-title">Prompt Chains</h1>
+    <p class="page-sub">Multi-step prompt workflows shared by the community.</p>
+  </div>
+</section>
+<section class="section">
+  {% if current_user %}
+  <div style="margin-bottom:24px">
+    <button class="btn-primary" onclick="document.getElementById('newChainWrap').style.display='block';this.style.display='none'">+ New Chain</button>
+    <div id="newChainWrap" style="display:none;margin-top:16px" class="settings-card">
+      <div class="form-group">
+        <label>Chain Title</label>
+        <input type="text" id="chainTitle" placeholder="e.g. Blog Post Workflow" maxlength="120" />
+      </div>
+      <div class="form-group">
+        <label>Description <span class="hint">(optional)</span></label>
+        <textarea id="chainDesc" rows="3" placeholder="Describe the workflow…" maxlength="500"></textarea>
+      </div>
+      <button class="btn-primary btn-sm" onclick="createChain()">Create Chain</button>
+    </div>
+  </div>
+  {% endif %}
+  {% if chains %}
+  <div class="collections-grid">
+    {% for c in chains %}
+    <a href="/chain/{{ c.id }}" class="collection-card">
+      <div class="collection-card-top">
+        <h3 class="collection-card-name">{{ c.title }}</h3>
+      </div>
+      {% if c.description %}<p class="collection-card-desc">{{ c.description[:120] }}{% if c.description|length > 120 %}…{% endif %}</p>{% endif %}
+      <div class="collection-card-meta">
+        <span>{{ c.get('prompt_ids',[])|length }} steps</span>
+        <span>by {{ c.owner }}</span>
+        <span>{{ c.created }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🔗</div>
+    <h3>No chains yet</h3>
+    <p>Create a multi-step prompt workflow to share with the community.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+function createChain() {
+  var title=document.getElementById('chainTitle')?.value.trim();
+  if(!title) return showToast('Title required.','error');
+  fetch('/api/chains',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({title:title,description:document.getElementById('chainDesc')?.value.trim()||''})
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok){showToast('Chain created!');location.href='/chain/'+d.chain.id;}
+    else showToast(d.error||'Error','error');
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "admin/layout.html" %}
+{% block title %}Tags{% endblock %}
+{% block page_title %}Tag Management{% endblock %}
+{% block breadcrumb_current %}tags{% endblock %}
+
+{% block content %}
+<div class="adm-two-col">
+  <!-- Tag list -->
+  <div class="adm-panel">
+    <div class="adm-panel-header">
+      <div class="adm-panel-title">All Tags</div>
+      <span style="font-size:.75rem;color:var(--adm-muted);font-family:var(--adm-mono)">{{ tags|length }} unique</span>
+    </div>
+    <div class="adm-table-wrap" style="max-height:600px;overflow-y:auto">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Tag</th>
+            <th>Prompts</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tags %}
+            {% set is_blacklisted = t.name in tags_config.get('blacklist',[]) %}
+          <tr {% if is_blacklisted %}style="opacity:.5"{% endif %}>
+            <td><span class="adm-tag" style="font-size:.75rem">{{ t.name }}</span></td>
+            <td class="cell-mono">{{ t.count }}</td>
+            <td>
+              {% if is_blacklisted %}
+                <span class="adm-badge badge-red">blacklisted</span>
+              {% elif t.name in tags_config.get('merged',{}) %}
+                <span class="adm-badge badge-yellow">merged</span>
+              {% else %}
+                <span class="adm-badge badge-green">active</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="adm-btn adm-btn-ghost adm-btn-xs"
+                        onclick="fillRename('{{ t.name|e }}')">✏ Rename</button>
+                <button class="adm-btn adm-btn-ghost adm-btn-xs"
+                        onclick="fillMerge('{{ t.name|e }}')">⤵ Merge</button>
+                {% if is_blacklisted %}
+                  <form method="POST" action="{{ url_for('admin.unblacklist_tag') }}">
+                    <input type="hidden" name="tag" value="{{ t.name }}"/>
+                    <button class="adm-btn adm-btn-ghost adm-btn-xs">✓ Unban</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="{{ url_for('admin.blacklist_tag') }}"
+                        onsubmit="return confirm('Blacklist tag \'{{ t.name }}\' and remove it from all prompts?')">
+                    <input type="hidden" name="tag" value="{{ t.name }}"/>
+                    <button class="adm-btn adm-btn-danger adm-btn-xs">⛔</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Actions sidebar -->
+  <div>
+    <!-- Rename -->
+    <div class="adm-panel">
+      <div class="adm-panel-header"><div class="adm-panel-title">Rename Tag</div></div>
+      <div class="adm-panel-body">
+        <form method="POST" action="{{ url_for('admin.rename_tag') }}">
+          <div class="adm-field">
+            <label class="adm-label">Old Tag</label>
+            <input type="text" name="old" id="renameOld" class="adm-input" placeholder="python" required/>
+          </div>
+          <div class="adm-field" style="margin-top:12px">
+            <label class="adm-label">New Name</label>
+            <input type="text" name="new" id="renameNew" class="adm-input" placeholder="Python" required/>
+          </div>
+          <button type="submit" class="adm-btn adm-btn-accent" style="margin-top:14px;width:100%">Rename Tag</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Merge -->
+    <div class="adm-panel">
+      <div class="adm-panel-header"><div class="adm-panel-title">Merge Tags</div></div>
+      <div class="adm-panel-body">
+        <form method="POST" action="{{ url_for('admin.merge_tags') }}">
+          <div class="adm-field">
+            <label class="adm-label">Merge <em>this tag</em>…</label>
+            <input type="text" name="source" id="mergeSource" class="adm-input" placeholder="javascript" required/>
+          </div>
+          <div class="adm-field" style="margin-top:12px">
+            <label class="adm-label">…into <em>this one</em></label>
+            <input type="text" name="target" id="mergeTarget" class="adm-input" placeholder="js" required/>
+          </div>
+          <button type="submit" class="adm-btn adm-btn-accent" style="margin-top:14px;width:100%">Merge Tags</button>
+          <div style="font-size:.72rem;color:var(--adm-muted);margin-top:8px">The source tag is removed and all its prompts get the target tag.</div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Blacklist -->
+    <div class="adm-panel">
+      <div class="adm-panel-header"><div class="adm-panel-title">Blacklist a Tag</div></div>
+      <div class="adm-panel-body">
+        <form method="POST" action="{{ url_for('admin.blacklist_tag') }}"
+              onsubmit="return confirm('Blacklist this tag and remove it from all prompts?')">
+          <div class="adm-inline-form">
+            <input type="text" name="tag" class="adm-input" placeholder="spamtag" required style="flex:1"/>
+            <button type="submit" class="adm-btn adm-btn-danger">⛔ Blacklist</button>
+          </div>
+        </form>
+        {% if tags_config.get('blacklist') %}
+          <div style="margin-top:14px">
+            <div class="adm-label" style="margin-bottom:8px">Currently blacklisted</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              {% for t in tags_config.blacklist %}
+                <span class="adm-tag" style="border-color:var(--adm-red)">
+                  {{ t }}
+                  <form method="POST" action="{{ url_for('admin.unblacklist_tag') }}" style="display:inline">
+                    <input type="hidden" name="tag" value="{{ t }}"/>
+                    <button style="background:none;border:none;cursor:pointer;color:var(--adm-red);padding:0;font-size:.7rem">✕</button>
+                  </form>
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function fillRename(tag) {
+  document.getElementById('renameOld').value = tag;
+  document.getElementById('renameNew').value = tag;
+  document.getElementById('renameNew').focus();
+}
+function fillMerge(tag) {
+  document.getElementById('mergeSource').value = tag;
+  document.getElementById('mergeTarget').focus();
+}
+</script>
+{% endblock %}

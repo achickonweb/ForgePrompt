@@ -1,0 +1,419 @@
+<!-- What I changed (Features 1-4, 6):
+  - Feature 1: Variable templating with live preview
+  - Feature 2: Comments section with add/delete/report
+  - Feature 3: Save to Collection dropdown
+  - Feature 4: Model badge display
+  - Feature 6: Token counter badge
+-->
+{% extends "base.html" %}
+{% block title %}{{ prompt.title }}{% endblock %}
+{% block meta_desc %}{{ prompt.text[:155] }}{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+  <!-- MAIN -->
+  <div class="detail-main">
+    <div class="detail-breadcrumb">
+      <a href="/prompts">Prompts</a>
+      <span>/</span>
+      <a href="/prompts?category={{ prompt.category | urlencode }}">{{ prompt.category }}</a>
+    </div>
+
+    <div class="detail-header">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="cat-badge cat-{{ prompt.category | lower | replace(' ', '-') }}">{{ prompt.category }}</span>
+        {% if prompt.get('model') %}
+        <span class="model-badge">{{ prompt.model }}</span>
+        {% endif %}
+      </div>
+      <h1 class="detail-title">{{ prompt.title }}</h1>
+      {% if forked_from_prompt %}
+      <div class="forked-from-badge">🔀 Forked from <a href="/prompts/{{ forked_from_prompt.id }}">{{ forked_from_prompt.title }}</a> by {{ forked_from_prompt.author }}</div>
+      {% endif %}
+      <div class="detail-meta">
+        <a href="/profile/{{ prompt.author }}" class="detail-author">
+          <span class="avatar-chip-sm" style="background: var(--accent)">{{ prompt.author[0].upper() }}</span>
+          {{ prompt.author }}
+        </a>
+        <span class="detail-date">{{ prompt.created }}</span>
+        <span class="detail-views">👁 {{ prompt.views }} views</span>
+        <span class="detail-upvotes">▲ {{ prompt.upvotes }} upvotes</span>
+        {% if prompt.verified_models %}<span class="verified-models-row">{% for vm in prompt.verified_models %}<span class="verified-badge">✓ {{ vm }}</span>{% endfor %}</span>{% endif %}
+        <span class="token-badge" id="detailTokenCount">~{{ (prompt.text|length / 4)|int }} tokens</span>
+      </div>
+    </div>
+
+    <div class="detail-prompt-box">
+      <div class="detail-prompt-header">
+        <span class="detail-prompt-label">// PROMPT</span>
+        <button class="copy-btn" id="copyPromptBtn" onclick="copyFilledPrompt(this)">
+          Copy Prompt
+        </button>
+      </div>
+      <pre class="detail-prompt-text" id="fullPromptText">{{ prompt.text }}</pre>
+    </div>
+
+    <!-- VARIABLE TEMPLATING (Feature 1) -->
+    <div class="tpl-variables" id="tplVariables" style="display:none">
+      <div class="tpl-header">
+        <span class="tpl-label">// FILL IN VARIABLES</span>
+        <button class="tpl-reset-btn" onclick="resetVariables()">Reset</button>
+      </div>
+      <div class="tpl-inputs" id="tplInputs"></div>
+    </div>
+
+    <div class="tpl-preview-wrap" id="tplPreviewWrap" style="display:none">
+      <div class="detail-prompt-box">
+        <div class="detail-prompt-header">
+          <span class="detail-prompt-label">// LIVE PREVIEW</span>
+          <button class="copy-btn" onclick="copyFilledPrompt(this)">Copy Filled</button>
+        </div>
+        <pre class="detail-prompt-text tpl-preview-text" id="tplPreview"></pre>
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <button class="upvote-btn upvote-btn--lg {% if prompt.user_voted %}voted{% endif %}"
+              onclick="upvote('{{ prompt.id }}', this)"
+              title="{% if not current_user %}Log in to upvote{% endif %}">
+        ▲ <span class="upvote-count">{{ prompt.upvotes }}</span>
+        <span class="upvote-label">{% if prompt.user_voted %}Upvoted{% else %}Upvote{% endif %}</span>
+      </button>
+
+      <button class="bookmark-btn bookmark-btn--lg {% if prompt.user_bookmarked %}bookmarked{% endif %}"
+              onclick="toggleBookmark('{{ prompt.id }}', this)"
+              title="{% if not current_user %}Log in to bookmark{% endif %}">
+        {% if prompt.user_bookmarked %}♥ Bookmarked{% else %}♡ Bookmark{% endif %}
+      </button>
+
+      {% if current_user %}
+      <button class="btn-ghost btn-sm" onclick="forkPrompt('{{ prompt.id }}')">🔀 Fork</button>
+      {% endif %}
+      {% if prompt.get('versions', []) %}
+      <a href="/prompts/{{ prompt.id }}/history" class="btn-ghost btn-sm">📜 History ({{ prompt.get('versions', [])|length }})</a>
+      {% endif %}
+      <!-- Feature 3: Save to Collection -->
+      {% if current_user %}
+      <div class="collection-dropdown" id="collDropdown">
+        <button class="btn-ghost btn-sm" onclick="toggleCollDropdown(event)">📁 Save to Collection</button>
+        <div class="coll-dropdown-menu" id="collDropdownMenu">
+          {% if user_collections %}
+            {% for c in user_collections %}
+            <button class="coll-dropdown-item" onclick="addToCollection('{{ c.id }}','{{ prompt.id }}')">
+              {{ c.name }}
+            </button>
+            {% endfor %}
+            <div class="dropdown-divider"></div>
+          {% endif %}
+          <button class="coll-dropdown-item coll-new-btn" onclick="showNewCollForm()">+ New Collection</button>
+          <div class="coll-new-form" id="collNewForm" style="display:none">
+            <input type="text" id="newCollName" placeholder="Collection name…" maxlength="80" />
+            <button class="btn-primary btn-sm" onclick="createCollection('{{ prompt.id }}')">Create</button>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if current_user and current_user.username == prompt.author %}
+      <a href="/prompts/{{ prompt.id }}/edit" class="btn-ghost btn-sm">Edit</a>
+      <form method="POST" action="/prompts/{{ prompt.id }}/delete" style="display:inline"
+            onsubmit="return confirm('Delete this prompt permanently?')">
+        <button type="submit" class="btn-danger btn-sm">Delete</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <div class="detail-tags">
+      {% for tag in prompt.tags %}
+      <a href="/prompts?tag={{ tag }}" class="tag">#{{ tag }}</a>
+      {% endfor %}
+    </div>
+
+    <!-- Feature D: Testing Playground -->
+    <div class="playground-section">
+      <h3 class="comments-title">Testing Playground <span class="comments-count">{{ prompt.get('test_results', [])|length }}</span></h3>
+      {% if current_user %}
+      <div class="playground-form" style="margin-bottom:20px">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+          <select id="testModel" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--radius);font-size:.82rem">
+            <option value="">Select model…</option>
+            {% for m in model_options %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+          </select>
+        </div>
+        <textarea id="testResult" rows="4" placeholder="Paste the AI output from this prompt (min 10 chars)…" maxlength="3000" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:var(--radius);font-family:var(--font-mono);font-size:.82rem;resize:vertical"></textarea>
+        <button class="btn-primary btn-sm" style="margin-top:8px" onclick="submitTestResult('{{ prompt.id }}')">Submit Test Result</button>
+      </div>
+      {% endif %}
+      {% for tr in prompt.get('test_results', [])|reverse %}
+      <div class="comment">
+        <div class="comment-header">
+          <span class="verified-badge">{{ tr.model }}</span>
+          <a href="/profile/{{ tr.author }}" class="comment-author"><span class="avatar-chip-sm" style="background:var(--accent)">{{ tr.author[0].upper() }}</span> {{ tr.author }}</a>
+          <span class="comment-date">{{ tr.created[:16]|replace('T',' ') }}</span>
+        </div>
+        <pre class="comment-text" style="font-family:var(--font-mono);font-size:.8rem;background:var(--bg3);padding:12px;border-radius:var(--radius);margin-top:8px;white-space:pre-wrap">{{ tr.result_text[:500] }}{% if tr.result_text|length > 500 %}…{% endif %}</pre>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Feature 2: Comments Section -->
+    <div class="comments-section" id="commentsSection">
+      <h3 class="comments-title">Discussion <span class="comments-count">{{ prompt.get('comments', [])|length }}</span></h3>
+
+      {% if current_user %}
+      <div class="comment-form">
+        <textarea id="commentText" rows="3" placeholder="Add a comment (10–1000 chars)…" maxlength="1000"></textarea>
+        <div class="comment-form-footer">
+          <span class="char-count" id="commentCharCount">0 / 1000</span>
+          <button class="btn-primary btn-sm" onclick="postComment('{{ prompt.id }}')">Post Comment</button>
+        </div>
+      </div>
+      {% else %}
+      <p class="comment-login-cta"><a href="/login?next={{ request.path }}">Log in</a> to join the discussion.</p>
+      {% endif %}
+
+      <div class="comments-list" id="commentsList">
+        {% for c in prompt.get('comments', [])|reverse %}
+        <div class="comment" id="comment-{{ c.id }}">
+          <div class="comment-header">
+            <a href="/profile/{{ c.author }}" class="comment-author">
+              <span class="avatar-chip-sm" style="background:var(--accent)">{{ c.author[0].upper() }}</span>
+              {{ c.author }}
+            </a>
+            <span class="comment-date">{{ c.created[:16]|replace('T',' ') }}</span>
+            {% if c.edited %}<span class="comment-edited">(edited)</span>{% endif %}
+          </div>
+          <div class="comment-text">{{ c.text }}</div>
+          <div class="comment-actions">
+            {% if current_user and (current_user.username == c.author or current_user.get('is_admin') or current_user.get('is_moderator')) %}
+            <button class="comment-action-btn" onclick="deleteComment('{{ prompt.id }}','{{ c.id }}')">Delete</button>
+            {% endif %}
+            {% if current_user and current_user.username != c.author %}
+            <button class="comment-action-btn" onclick="reportComment('{{ prompt.id }}','{{ c.id }}')">Report</button>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="detail-sidebar">
+    {% if related %}
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Related Prompts</h3>
+      <div class="sidebar-prompts">
+        {% for r in related %}
+        <a href="/prompts/{{ r.id }}" class="sidebar-prompt-card">
+          <span class="spc-title">{{ r.title }}</span>
+          <span class="spc-meta">▲ {{ r.upvotes }} · 👁 {{ r.views }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Prompt Stats</h3>
+      <div class="sidebar-stats">
+        <div class="ss-row"><span>Views</span><strong>{{ prompt.views }}</strong></div>
+        <div class="ss-row"><span>Upvotes</span><strong>{{ prompt.upvotes }}</strong></div>
+        <div class="ss-row"><span>Category</span><strong>{{ prompt.category }}</strong></div>
+        {% if prompt.get('model') %}
+        <div class="ss-row"><span>Model</span><strong>{{ prompt.model }}</strong></div>
+        {% endif %}
+        <div class="ss-row"><span>Author</span><a href="/profile/{{ prompt.author }}">{{ prompt.author }}</a></div>
+        <div class="ss-row"><span>Submitted</span><strong>{{ prompt.created }}</strong></div>
+        <div class="ss-row"><span>Length</span><strong>{{ prompt.text|length }} chars</strong></div>
+        <div class="ss-row"><span>Tokens</span><strong>~{{ (prompt.text|length / 4)|int }}</strong></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Browse Category</h3>
+      <a href="/prompts?category={{ prompt.category | urlencode }}" class="btn-primary btn-full" style="text-align:center">
+        More {{ prompt.category }} →
+      </a>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* Feature 1: Prompt Variable Templating */
+window.copyFilledPrompt = function(btn) {
+  var text = document.getElementById('fullPromptText').textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    var orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    showToast('Prompt copied to clipboard!');
+  });
+};
+(function() {
+  const rawText = document.getElementById('fullPromptText').textContent;
+  const placeholderRegex = /\[([A-Z][A-Z0-9 _\-]*)\]/g;
+  const matches = [];
+  let m;
+  while ((m = placeholderRegex.exec(rawText)) !== null) {
+    if (matches.indexOf(m[1]) === -1) matches.push(m[1]);
+  }
+  if (matches.length === 0) return;
+
+  const varsWrap   = document.getElementById('tplVariables');
+  const inputsWrap = document.getElementById('tplInputs');
+  const previewWrap= document.getElementById('tplPreviewWrap');
+  const previewEl  = document.getElementById('tplPreview');
+
+  varsWrap.style.display = '';
+  previewWrap.style.display = '';
+  previewEl.textContent = rawText;
+
+  matches.forEach(function(name) {
+    var row = document.createElement('div');
+    row.className = 'tpl-input-row';
+    var label = document.createElement('label');
+    label.className = 'tpl-input-label';
+    label.textContent = name;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'tpl-input';
+    input.placeholder = 'Enter ' + name.toLowerCase().replace(/_/g, ' ') + '…';
+    input.dataset.placeholder = name;
+    input.addEventListener('input', updatePreview);
+    row.appendChild(label);
+    row.appendChild(input);
+    inputsWrap.appendChild(row);
+  });
+
+  function getFilledText() {
+    var filled = rawText;
+    inputsWrap.querySelectorAll('.tpl-input').forEach(function(inp) {
+      var ph = inp.dataset.placeholder;
+      var val = inp.value.trim();
+      var re = new RegExp('\\[' + ph.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\]', 'g');
+      if (val) filled = filled.replace(re, val);
+    });
+    return filled;
+  }
+  function updatePreview() { previewEl.textContent = getFilledText(); }
+
+  window.copyFilledPrompt = function(btn) {
+    navigator.clipboard.writeText(getFilledText()).then(function() {
+      var orig = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+      showToast('Prompt copied to clipboard!');
+    });
+  };
+  window.resetVariables = function() {
+    inputsWrap.querySelectorAll('.tpl-input').forEach(function(inp) { inp.value = ''; });
+    updatePreview();
+  };
+})();
+
+/* Feature 2: Comments */
+document.getElementById('commentText')?.addEventListener('input', function() {
+  document.getElementById('commentCharCount').textContent = this.value.length + ' / 1000';
+});
+
+function postComment(promptId) {
+  var text = document.getElementById('commentText')?.value.trim();
+  if (!text || text.length < 10) return showToast('Comment must be at least 10 characters.', 'error');
+  fetch('/api/prompts/' + promptId + '/comments', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({text: text})
+  })
+  .then(r => r.json().then(d => ({ok:r.ok, data:d})))
+  .then(({ok, data}) => {
+    if (ok) { showToast('Comment posted!'); location.reload(); }
+    else showToast(data.error || 'Failed to post comment.', 'error');
+  })
+  .catch(() => showToast('Network error.', 'error'));
+}
+
+function deleteComment(promptId, commentId) {
+  if (!confirm('Delete this comment?')) return;
+  fetch('/api/prompts/' + promptId + '/comments/' + commentId, {method:'DELETE'})
+  .then(r => r.json())
+  .then(data => { if (data.ok) { document.getElementById('comment-'+commentId)?.remove(); showToast('Comment deleted.'); }
+    else showToast(data.error || 'Error', 'error'); });
+}
+
+function reportComment(promptId, commentId) {
+  var reason = prompt('Reason for reporting this comment:');
+  if (!reason) return;
+  fetch('/api/prompts/' + promptId + '/comments/' + commentId + '/report', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({reason: reason})
+  }).then(r => r.json()).then(d => showToast(d.message || d.error));
+}
+
+/* Feature 3: Collections */
+function toggleCollDropdown(e) {
+  e.stopPropagation();
+  document.getElementById('collDropdownMenu')?.classList.toggle('open');
+}
+document.addEventListener('click', function() {
+  document.getElementById('collDropdownMenu')?.classList.remove('open');
+});
+
+function addToCollection(colId, promptId) {
+  fetch('/api/collections/' + colId + '/add/' + promptId, {method:'POST'})
+  .then(r => r.json()).then(d => {
+    if (d.ok) showToast('Added to collection!');
+    else showToast(d.error || 'Error', 'error');
+  });
+  document.getElementById('collDropdownMenu')?.classList.remove('open');
+}
+
+function showNewCollForm() {
+  document.getElementById('collNewForm').style.display = 'flex';
+  document.getElementById('newCollName')?.focus();
+}
+
+function createCollection(promptId) {
+  var name = document.getElementById('newCollName')?.value.trim();
+  if (!name) return;
+  fetch('/api/collections', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name: name, is_public: true})
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      addToCollection(d.collection.id, promptId);
+      showToast('Collection created!');
+    } else showToast(d.error || 'Error', 'error');
+  });
+}
+</script>
+{% endblock %}
+
+<script>
+/* Feature A: Fork */
+function forkPrompt(promptId) {
+  if (!confirm('Fork this prompt? A copy will be created in your profile.')) return;
+  fetch('/api/prompts/' + promptId + '/fork', {method:'POST'})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Forked! Redirecting…'); setTimeout(()=>location.href='/prompts/'+d.prompt.id, 800); }
+    else showToast(d.error||'Error','error');
+  });
+}
+/* Feature D: Test Result */
+function submitTestResult(promptId) {
+  var model = document.getElementById('testModel')?.value;
+  var text = document.getElementById('testResult')?.value.trim();
+  if (!model) return showToast('Select a model.','error');
+  if (!text || text.length < 10) return showToast('Result text too short.','error');
+  fetch('/api/prompts/' + promptId + '/test-result', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({model:model, result_text:text})
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok) { showToast('Test result added!'); location.reload(); }
+    else showToast(d.error||'Error','error');
+  });
+}
+</script>

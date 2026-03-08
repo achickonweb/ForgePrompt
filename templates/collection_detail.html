@@ -1,0 +1,44 @@
+<!-- Feature 3: Collection detail page -->
+{% extends "base.html" %}
+{% block title %}{{ collection.name }}{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/collections/{{ collection.owner }}" class="back-link">← Back to collections</a>
+    <h1 class="page-title">{{ collection.name }}</h1>
+    {% if collection.description %}<p class="page-sub">{{ collection.description }}</p>{% endif %}
+    <div style="display:flex;gap:12px;align-items:center;justify-content:center;margin-top:12px;font-size:.82rem;color:var(--text-muted)">
+      <span>By <a href="/profile/{{ collection.owner }}" style="color:var(--accent);font-weight:700">{{ collection.owner }}</a></span>
+      <span>·</span>
+      <span>{{ prompts|length }} prompts</span>
+      <span>·</span>
+      <span>{{ collection.created }}</span>
+      {% if not collection.get('is_public') %}<span class="model-badge" style="font-size:.6rem">Private</span>{% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  {% if is_own %}
+  <div style="margin-bottom:20px;text-align:right">
+    <button class="btn-danger btn-sm" onclick="if(confirm('Delete this collection?'))fetch('/api/collections/{{ collection.id }}',{method:'DELETE'}).then(()=>location.href='/collections/{{ collection.owner }}')">Delete Collection</button>
+  </div>
+  {% endif %}
+
+  {% if prompts %}
+  <div class="prompt-grid prompt-grid--full">
+    {% for p in prompts %}
+      {% include "_prompt_card.html" %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📁</div>
+    <h3>No prompts in this collection</h3>
+    <p>Browse prompts and use "Save to Collection" to add them here.</p>
+    <a href="/prompts" class="btn-primary">Browse Prompts</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

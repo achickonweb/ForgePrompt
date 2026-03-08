@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My Feed{% endblock %}
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <span class="section-tag">// your feed</span>
+    <h1 class="page-title">My Feed</h1>
+    <p class="page-sub">Latest prompts from people you follow.</p>
+  </div>
+</section>
+<section class="section">
+  {% if prompts %}
+  <div class="prompt-grid prompt-grid--full">
+    {% for p in prompts %}{% include "_prompt_card.html" %}{% endfor %}
+  </div>
+  {% elif following %}
+  <div class="empty-state">
+    <div class="empty-icon">📰</div>
+    <h3>No new prompts</h3>
+    <p>The people you follow haven't posted recently.</p>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">👥</div>
+    <h3>You're not following anyone yet</h3>
+    <p>Follow other users to see their prompts here.</p>
+    <a href="/prompts" class="btn-primary">Explore Prompts</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

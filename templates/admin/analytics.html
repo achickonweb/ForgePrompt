@@ -1,0 +1,206 @@
+{% extends "admin/layout.html" %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block breadcrumb_current %}analytics{% endblock %}
+
+{% block content %}
+<!-- Signups chart -->
+<div class="adm-panel">
+  <div class="adm-panel-header">
+    <div class="adm-panel-title">New Signups — Last 30 Days</div>
+    <span style="font-size:.75rem;color:var(--adm-muted);font-family:var(--adm-mono)">
+      {{ signups_chart | sum(attribute='count') }} total in period
+    </span>
+  </div>
+  <div class="adm-panel-body">
+    {% set max_s = signups_chart | map(attribute='count') | max | default(1) %}
+    {% if max_s == 0 %}{% set max_s = 1 %}{% endif %}
+    <div class="adm-bar-chart" style="height:120px">
+      {% for d in signups_chart %}
+        <div class="adm-bar-col">
+          <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+            <div class="adm-bar-fill"
+                 style="height:{{ [((d.count / max_s) * 100)|int, 2] | max }}%;width:100%"
+                 title="{{ d.date }}: {{ d.count }}"></div>
+          </div>
+          {% if loop.index % 5 == 0 or loop.first or loop.last %}
+            <div class="adm-bar-label">{{ d.date[5:] }}</div>
+          {% else %}
+            <div class="adm-bar-label"></div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Most viewed / upvoted grids -->
+<div class="adm-two-col">
+  <!-- Most Viewed -->
+  <div class="adm-panel">
+    <div class="adm-panel-header">
+      <div class="adm-panel-title">Most Viewed Prompts</div>
+      <div class="adm-filter-tabs" style="gap:4px">
+        <span class="adm-badge badge-blue" id="vTab-week" onclick="switchViewTab('week')" style="cursor:pointer">Week</span>
+        <span class="adm-badge" id="vTab-month" onclick="switchViewTab('month')" style="cursor:pointer">Month</span>
+        <span class="adm-badge" id="vTab-all" onclick="switchViewTab('all')" style="cursor:pointer">All</span>
+      </div>
+    </div>
+    <div id="views-week" class="view-panel">
+      {% for p in week_views %}<div class="adm-rank-row">
+        <span class="adm-rank-num">{{ loop.index }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</div>
+          <div style="font-size:.7rem;color:var(--adm-muted)">{{ p.author }} · {{ p.category }}</div>
+        </div>
+        <span class="adm-badge badge-blue" style="flex-shrink:0">{{ p.get('views',0) }} views</span>
+      </div>{% endfor %}
+    </div>
+    <div id="views-month" class="view-panel" style="display:none">
+      {% for p in month_views %}<div class="adm-rank-row">
+        <span class="adm-rank-num">{{ loop.index }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</div>
+          <div style="font-size:.7rem;color:var(--adm-muted)">{{ p.author }} · {{ p.category }}</div>
+        </div>
+        <span class="adm-badge badge-blue" style="flex-shrink:0">{{ p.get('views',0) }} views</span>
+      </div>{% endfor %}
+    </div>
+    <div id="views-all" class="view-panel" style="display:none">
+      {% for p in all_views %}<div class="adm-rank-row">
+        <span class="adm-rank-num">{{ loop.index }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</div>
+          <div style="font-size:.7rem;color:var(--adm-muted)">{{ p.author }} · {{ p.category }}</div>
+        </div>
+        <span class="adm-badge badge-blue" style="flex-shrink:0">{{ p.get('views',0) }} views</span>
+      </div>{% endfor %}
+    </div>
+  </div>
+
+  <!-- Most Upvoted -->
+  <div class="adm-panel">
+    <div class="adm-panel-header">
+      <div class="adm-panel-title">Most Upvoted Prompts</div>
+      <div class="adm-filter-tabs" style="gap:4px">
+        <span class="adm-badge badge-purple" id="uTab-week" onclick="switchUpTab('week')" style="cursor:pointer">Week</span>
+        <span class="adm-badge" id="uTab-month" onclick="switchUpTab('month')" style="cursor:pointer">Month</span>
+        <span class="adm-badge" id="uTab-all" onclick="switchUpTab('all')" style="cursor:pointer">All</span>
+      </div>
+    </div>
+    <div id="up-week" class="up-panel">
+      {% for p in week_upvotes %}<div class="adm-rank-row">
+        <span class="adm-rank-num">{{ loop.index }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</div>
+          <div style="font-size:.7rem;color:var(--adm-muted)">{{ p.author }} · {{ p.category }}</div>
+        </div>
+        <span class="adm-badge badge-purple" style="flex-shrink:0">▲ {{ p.upvoted_by|length }}</span>
+      </div>{% endfor %}
+    </div>
+    <div id="up-month" class="up-panel" style="display:none">
+      {% for p in month_upvotes %}<div class="adm-rank-row">
+        <span class="adm-rank-num">{{ loop.index }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</div>
+          <div style="font-size:.7rem;color:var(--adm-muted)">{{ p.author }} · {{ p.category }}</div>
+        </div>
+        <span class="adm-badge badge-purple" style="flex-shrink:0">▲ {{ p.upvoted_by|length }}</span>
+      </div>{% endfor %}
+    </div>
+    <div id="up-all" class="up-panel" style="display:none">
+      {% for p in all_upvotes %}<div class="adm-rank-row">
+        <span class="adm-rank-num">{{ loop.index }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</div>
+          <div style="font-size:.7rem;color:var(--adm-muted)">{{ p.author }} · {{ p.category }}</div>
+        </div>
+        <span class="adm-badge badge-purple" style="flex-shrink:0">▲ {{ p.upvoted_by|length }}</span>
+      </div>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Active users + search -->
+<div class="adm-two-col">
+  <div class="adm-panel">
+    <div class="adm-panel-header"><div class="adm-panel-title">Most Active Users</div></div>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead><tr><th>#</th><th>User</th><th>Prompts</th><th>Upvotes</th></tr></thead>
+        <tbody>
+          {% for u in active_users %}
+          <tr>
+            <td class="cell-mono" style="color:var(--adm-muted)">{{ loop.index }}</td>
+            <td>
+              <a href="{{ url_for('profile', username=u.username) }}" target="_blank"
+                 style="color:var(--adm-text);font-weight:700;text-decoration:none">{{ u.username }}</a>
+            </td>
+            <td class="cell-mono">{{ u.prompts }}</td>
+            <td class="cell-mono" style="color:var(--adm-purple)">▲ {{ u.upvotes }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-header">
+      <div class="adm-panel-title">Top Search Queries</div>
+      <span style="font-size:.72rem;color:var(--adm-muted);font-family:var(--adm-mono)">{{ total_searches }} total searches</span>
+    </div>
+    <div class="adm-panel-body" style="padding:0">
+      {% set max_q = top_searches[0][1] if top_searches else 1 %}
+      {% for query, count in top_searches %}
+      <div style="padding:10px 20px;border-bottom:1px solid var(--adm-border);display:flex;align-items:center;gap:12px">
+        <span class="adm-rank-num">{{ loop.index }}</span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.82rem">{{ query }}</div>
+          <div class="adm-progress" style="margin-top:5px">
+            <div class="adm-progress-bar" style="width:{{ ((count/max_q)*100)|int }}%;background:var(--adm-blue)"></div>
+          </div>
+        </div>
+        <span class="adm-badge badge-blue">{{ count }}×</span>
+      </div>
+      {% else %}
+        <div class="adm-empty" style="padding:30px">
+          <div class="adm-empty-icon">🔍</div>
+          <div class="adm-empty-title">No searches yet</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<style>
+.adm-rank-row {
+  display:flex;align-items:center;gap:10px;
+  padding:10px 20px;border-bottom:1px solid var(--adm-border);
+}
+.adm-rank-row:last-child{border-bottom:none}
+.adm-rank-num {
+  font-family:var(--adm-mono);font-size:.7rem;
+  color:var(--adm-muted);width:18px;text-align:center;flex-shrink:0;
+}
+</style>
+
+<script>
+function switchViewTab(t) {
+  document.querySelectorAll('.view-panel').forEach(el=>el.style.display='none');
+  document.getElementById('views-'+t).style.display='';
+  ['week','month','all'].forEach(id=>{
+    const el=document.getElementById('vTab-'+id);
+    el.className='adm-badge'+(id===t?' badge-blue':'');
+  });
+}
+function switchUpTab(t) {
+  document.querySelectorAll('.up-panel').forEach(el=>el.style.display='none');
+  document.getElementById('up-'+t).style.display='';
+  ['week','month','all'].forEach(id=>{
+    const el=document.getElementById('uTab-'+id);
+    el.className='adm-badge'+(id===t?' badge-purple':'');
+  });
+}
+</script>
+{% endblock %}

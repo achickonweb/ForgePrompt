@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="logo-bracket">[</span>ForgePrompt<span class="logo-bracket">]</span>
+    </div>
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-sub">Join the community. Submit, upvote and bookmark prompts.</p>
+
+    {% if errors %}
+    <ul class="auth-errors">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="POST" action="/register" class="auth-form">
+      <div class="form-group">
+        <label>Username <span class="hint">(3–24 chars, letters/numbers/_-)</span></label>
+        <input type="text" name="username" value="{{ username }}" placeholder="yourhandle"
+               autocomplete="username" autocapitalize="none"
+               pattern="[a-zA-Z0-9_\-]{3,24}" maxlength="24" required autofocus />
+      </div>
+      <div class="form-group">
+        <label>Password <span class="hint">(min 6 characters)</span></label>
+        <div class="pw-input-wrap">
+          <input type="password" name="password" id="regPw" placeholder="••••••••"
+                 autocomplete="new-password" minlength="6" required
+                 oninput="checkStrength(this.value)" />
+          <button type="button" class="pw-toggle" onclick="togglePw('regPw', this)">Show</button>
+        </div>
+        <div class="strength-bar-wrap" style="margin-top:8px">
+          <div class="strength-bar" id="regStrengthBar"></div>
+          <span class="strength-label" id="regStrengthLabel"></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirm password</label>
+        <input type="password" name="confirm" placeholder="••••••••"
+               autocomplete="new-password" required />
+      </div>
+      <button type="submit" class="btn-primary btn-full">Create account →</button>
+    </form>
+
+    <p class="auth-switch">
+      Already have an account? <a href="/login">Log in</a>
+    </p>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function checkStrength(pw) {
+  const bar   = document.getElementById('regStrengthBar');
+  const label = document.getElementById('regStrengthLabel');
+  if (!pw) { bar.style.width = '0'; label.textContent = ''; return; }
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^a-zA-Z0-9]/.test(pw)) score++;
+  const levels = [
+    { label: 'Very weak', pct: 15, cls: 'weak' },
+    { label: 'Weak',      pct: 30, cls: 'weak' },
+    { label: 'Fair',      pct: 50, cls: 'fair' },
+    { label: 'Good',      pct: 75, cls: 'good' },
+    { label: 'Strong',    pct: 100, cls: 'strong' },
+  ];
+  const lv = levels[Math.min(score, 4)];
+  bar.style.width = lv.pct + '%';
+  bar.className   = 'strength-bar strength-' + lv.cls;
+  label.textContent = lv.label;
+}
+</script>
+{% endblock %}

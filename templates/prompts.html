@@ -1,0 +1,130 @@
+<!-- What I changed (Features 4, 7, 8): Model filter dropdown, trending sort, request CTA -->
+{% extends "base.html" %}
+{% block title %}Prompt Library{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <span class="section-tag">// ai prompt library</span>
+    <h1 class="page-title">Prompt Library</h1>
+    <p class="page-sub">{{ prompts|length }} prompt{% if prompts|length != 1 %}s{% endif %} — browse, copy and upvote.</p>
+  </div>
+</section>
+
+<!-- FILTERS -->
+<section class="filters-bar">
+  <div class="filters-inner">
+    <div class="search-box filter-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="filterSearch"
+             placeholder="Search prompts…"
+             value="{{ search_query }}"
+             autocomplete="off" />
+    </div>
+    <div class="filter-cats">
+      <a href="/prompts{% if sort != 'upvotes' %}?sort={{ sort }}{% endif %}"
+         class="cat-chip {% if not active_category and not active_tag %}active{% endif %}">All</a>
+      {% for cat in categories %}
+      <a href="/prompts?category={{ cat | urlencode }}{% if sort != 'upvotes' %}&sort={{ sort }}{% endif %}"
+         class="cat-chip cat-{{ cat | lower | replace(' ', '-') }} {% if active_category == cat %}active{% endif %}">
+        {{ cat }}
+      </a>
+      {% endfor %}
+    </div>
+    <div class="sort-wrap">
+      <select id="modelFilter" onchange="applyModel(this.value)" title="Filter by model">
+        <option value="">All Models</option>
+        {% for m in model_options %}
+        <option value="{{ m }}" {% if active_model == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+      <label class="sort-label">Sort:</label>
+      <select id="sortSelect" onchange="applySort(this.value)">
+        <option value="upvotes"  {% if sort == 'upvotes' %}selected{% endif %}>Most Voted</option>
+        <option value="views"    {% if sort == 'views'   %}selected{% endif %}>Most Viewed</option>
+        <option value="newest"   {% if sort == 'newest'  %}selected{% endif %}>Newest</option>
+        <option value="trending" {% if sort == 'trending' %}selected{% endif %}>Trending</option>
+      </select>
+    </div>
+  </div>
+  {% if active_tag %}
+  <div class="active-tag-bar">
+    Filtering by tag: <strong>#{{ active_tag }}</strong>
+    <a href="/prompts" class="clear-tag">✕ Clear</a>
+  </div>
+  {% endif %}
+</section>
+
+<!-- RESULTS -->
+<section class="section prompts-results">
+  <div class="results-meta">
+    <span class="results-count">
+      Showing <strong>{{ prompts|length }}</strong> prompt{% if prompts|length != 1 %}s{% endif %}
+      {% if active_category %} in <em>{{ active_category }}</em>{% endif %}
+      {% if active_model %} for <em>{{ active_model }}</em>{% endif %}
+      {% if search_query %} matching "<em>{{ search_query }}</em>"{% endif %}
+    </span>
+  </div>
+
+  {% if current_user %}
+  <div class="request-cta-inline">
+    <span>Can't find what you need?</span>
+    <a href="/requests" class="btn-ghost btn-sm">Request a Prompt →</a>
+  </div>
+  {% endif %}
+
+  {% if prompts %}
+  <div class="prompt-grid prompt-grid--full">
+    {% for p in prompts %}
+      {% include "_prompt_card.html" %}
+    {% endfor %}
+  </div>
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+    <a href="?{{ 'category=' ~ active_category ~ '&' if active_category }}{{ 'search=' ~ search_query ~ '&' if search_query }}{{ 'model=' ~ active_model ~ '&' if active_model }}sort={{ sort }}&page={{ page - 1 }}" class="page-btn">← Prev</a>
+    {% endif %}
+    <span class="page-info">Page {{ page }} of {{ total_pages }} ({{ total_results }} results)</span>
+    {% if page < total_pages %}
+    <a href="?{{ 'category=' ~ active_category ~ '&' if active_category }}{{ 'search=' ~ search_query ~ '&' if search_query }}{{ 'model=' ~ active_model ~ '&' if active_model }}sort={{ sort }}&page={{ page + 1 }}" class="page-btn">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">∅</div>
+    <h3>No prompts found</h3>
+    <p>Try a different search or category, or submit your own!</p>
+    <button class="btn-primary" onclick="openSubmitModal()">Submit a Prompt</button>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let searchTimer;
+document.getElementById('filterSearch').addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (this.value) params.set('search', this.value);
+    else params.delete('search');
+    window.location.search = params.toString();
+  }, 500);
+});
+
+function applySort(val) {
+  const params = new URLSearchParams(window.location.search);
+  params.set('sort', val);
+  window.location.search = params.toString();
+}
+
+function applyModel(val) {
+  const params = new URLSearchParams(window.location.search);
+  if (val) params.set('model', val);
+  else params.delete('model');
+  window.location.search = params.toString();
+}
+</script>
+{% endblock %}

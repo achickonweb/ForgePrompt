@@ -1,0 +1,183 @@
+{% extends "admin/layout.html" %}
+{% block title %}Prompts{% endblock %}
+{% block page_title %}Prompt Moderation{% endblock %}
+{% block breadcrumb_current %}prompts{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('admin.admin_prompts', status='pending') }}" class="adm-btn adm-btn-yellow adm-btn-sm">
+    ⏳ Queue ({{ stats.pending }})
+  </a>
+{% endblock %}
+
+{% block content %}
+<!-- Stats row -->
+<div class="adm-stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+  <div class="adm-stat-card">
+    <div class="adm-stat-label">Total</div>
+    <div class="adm-stat-value">{{ stats.total }}</div>
+  </div>
+  <div class="adm-stat-card accent-blue">
+    <div class="adm-stat-label">Published</div>
+    <div class="adm-stat-value">{{ stats.published }}</div>
+  </div>
+  <div class="adm-stat-card accent-yellow">
+    <div class="adm-stat-label">Pending</div>
+    <div class="adm-stat-value">{{ stats.pending }}</div>
+  </div>
+  <div class="adm-stat-card accent-red">
+    <div class="adm-stat-label">Hidden</div>
+    <div class="adm-stat-value">{{ stats.hidden }}</div>
+  </div>
+</div>
+
+<div class="adm-panel">
+  <!-- Filters -->
+  <div class="adm-filter-bar">
+    <form method="GET" class="adm-search-wrap">
+      <span class="adm-search-icon">⌕</span>
+      <input type="text" name="q" class="adm-input" placeholder="Search title or author…" value="{{ search }}"/>
+      <input type="hidden" name="status" value="{{ status_filter }}"/>
+      <input type="hidden" name="category" value="{{ category_filter }}"/>
+    </form>
+    <div class="adm-filter-tabs">
+      <a href="{{ url_for('admin.admin_prompts') }}" class="adm-filter-tab {% if not status_filter %}active{% endif %}">All</a>
+      <a href="{{ url_for('admin.admin_prompts', status='published') }}" class="adm-filter-tab {% if status_filter=='published' %}active{% endif %}">Published</a>
+      <a href="{{ url_for('admin.admin_prompts', status='pending') }}" class="adm-filter-tab {% if status_filter=='pending' %}active{% endif %}">
+        Pending{% if stats.pending %} <span class="adm-nav-badge badge-yellow" style="position:static">{{ stats.pending }}</span>{% endif %}
+      </a>
+      <a href="{{ url_for('admin.admin_prompts', status='hidden') }}" class="adm-filter-tab {% if status_filter=='hidden' %}active{% endif %}">Hidden</a>
+    </div>
+    <select class="adm-select adm-select-sm" onchange="window.location=this.value">
+      <option value="{{ url_for('admin.admin_prompts', status=status_filter, q=search) }}">All categories</option>
+      {% for cat in categories %}
+        <option value="{{ url_for('admin.admin_prompts', status=status_filter, q=search, category=cat) }}"
+          {% if category_filter==cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Bulk bar -->
+  <div class="adm-select-all-bar" id="bulkBar" style="display:none">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" onchange="toggleAll(this)"/> Select all
+    </label>
+    <span style="color:var(--adm-muted)" id="bulkCount">0 selected</span>
+    <div class="adm-bulk-actions">
+      <form method="POST" action="{{ url_for('admin.bulk_prompts') }}" id="bulkForm">
+        <input type="hidden" name="action" id="bulkAction"/>
+        <div id="bulkIds"></div>
+        <select name="new_category" class="adm-select adm-select-sm" id="bulkCatSel" style="display:none">
+          {% for cat in categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+        </select>
+      </form>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="doBulk('publish')">✓ Publish</button>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="doBulk('hide')">🙈 Hide</button>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="document.getElementById('bulkCatSel').style.display='';doBulk('change_category')">📂 Category</button>
+      <button class="adm-btn adm-btn-danger adm-btn-sm" onclick="doBulk('delete')">🗑 Delete</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th style="width:32px"><input type="checkbox" onchange="toggleAll(this)"/></th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Views</th>
+          <th>Votes</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in prompts %}
+        <tr>
+          <td><input type="checkbox" class="row-check" value="{{ p.id }}"/></td>
+          <td>
+            <div style="font-weight:700;font-size:.82rem;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              {{ p.title }}
+            </div>
+            {% if p.tags %}
+              <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
+                {% for tag in p.tags[:4] %}
+                  <span class="adm-tag">{{ tag }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% if p.get('pinned') %}
+              <span class="adm-badge badge-yellow" style="margin-top:4px">📌 pinned</span>
+            {% endif %}
+          </td>
+          <td class="cell-mono">
+            <a href="{{ url_for('admin.user_detail', user_id='') }}{{ p.author }}" style="color:var(--adm-blue);text-decoration:none">{{ p.author }}</a>
+          </td>
+          <td><span class="adm-badge badge-blue">{{ p.category }}</span></td>
+          <td>
+            {% if p.get('status','published')=='published' %}
+              <span class="adm-badge badge-green">published</span>
+            {% elif p.get('status')=='pending' %}
+              <span class="adm-badge badge-yellow">pending</span>
+            {% else %}
+              <span class="adm-badge badge-red">hidden</span>
+            {% endif %}
+          </td>
+          <td class="cell-mono cell-muted">{{ p.get('views',0) }}</td>
+          <td class="cell-mono cell-muted">{{ p.upvoted_by|length }}</td>
+          <td class="cell-mono cell-muted">{{ p.get('created','') }}</td>
+          <td>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <a href="{{ url_for('admin.admin_edit_prompt', prompt_id=p.id) }}" class="adm-btn adm-btn-ghost adm-btn-xs">✏</a>
+              {% if p.get('status')=='pending' %}
+                <form method="POST" action="{{ url_for('admin.approve_prompt', prompt_id=p.id) }}">
+                  <button class="adm-btn adm-btn-accent adm-btn-xs">✓</button>
+                </form>
+              {% endif %}
+              {% if p.get('status','published')=='published' %}
+                <form method="POST" action="{{ url_for('admin.hide_prompt', prompt_id=p.id) }}">
+                  <button class="adm-btn adm-btn-ghost adm-btn-xs">🙈</button>
+                </form>
+              {% else %}
+                <form method="POST" action="{{ url_for('admin.publish_prompt', prompt_id=p.id) }}">
+                  <button class="adm-btn adm-btn-ghost adm-btn-xs">👁</button>
+                </form>
+              {% endif %}
+              <form method="POST" action="{{ url_for('admin.pin_prompt', prompt_id=p.id) }}">
+                <button class="adm-btn adm-btn-ghost adm-btn-xs" title="{{ 'Unpin' if p.get('pinned') else 'Pin' }}">
+                  {{ '📍' if p.get('pinned') else '📌' }}
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.admin_delete_prompt', prompt_id=p.id) }}"
+                    onsubmit="return confirm('Delete this prompt permanently?')">
+                <button class="adm-btn adm-btn-danger adm-btn-xs">🗑</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9">
+            <div class="adm-empty"><div class="adm-empty-icon">📝</div><div class="adm-empty-title">No prompts found</div></div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function doBulk(action) {
+  const checked = [...document.querySelectorAll('.row-check:checked')].map(c => c.value);
+  if (!checked.length) { alert('Select at least one prompt.'); return; }
+  if (action === 'delete' && !confirm(`Delete ${checked.length} prompts permanently?`)) return;
+  const form = document.getElementById('bulkForm');
+  document.getElementById('bulkAction').value = action;
+  document.getElementById('bulkIds').innerHTML = checked.map(id => `<input type="hidden" name="ids" value="${id}"/>`).join('');
+  form.submit();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "admin/layout.html" %}
+{% block title %}Announcements{% endblock %}
+{% block page_title %}Announcement Banners{% endblock %}
+{% block breadcrumb_current %}announcements{% endblock %}
+
+{% block content %}
+<div class="adm-two-col">
+  <!-- Active announcements -->
+  <div class="adm-panel">
+    <div class="adm-panel-header">
+      <div class="adm-panel-title">Banners</div>
+      <span style="font-size:.75rem;color:var(--adm-muted);font-family:var(--adm-mono)">{{ announcements|length }} total</span>
+    </div>
+
+    {% if announcements %}
+      {% for ann in announcements|sort(attribute='created', reverse=True) %}
+      <div style="padding:16px 20px;border-bottom:1px solid var(--adm-border)">
+        <!-- Preview -->
+        {% set colors = {
+          'accent':  ('rgba(0,255,136,.1)',  '#00ff88'),
+          'blue':    ('rgba(0,212,255,.1)',  '#00d4ff'),
+          'red':     ('rgba(255,71,87,.1)',  '#ff4757'),
+          'yellow':  ('rgba(255,211,42,.1)', '#ffd32a'),
+          'purple':  ('rgba(167,139,250,.1)','#a78bfa'),
+          'orange':  ('rgba(255,107,53,.1)', '#ff6b35')
+        } %}
+        {% set clr = colors.get(ann.get('color','accent'), colors['accent']) %}
+        <div style="background:{{ clr[0] }};border:1px solid {{ clr[1] }}33;border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:.84rem;color:{{ clr[1] }}">
+          {{ ann.text }}
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="font-size:.7rem;color:var(--adm-muted);font-family:var(--adm-mono)">
+            by {{ ann.get('created_by','?') }} · {{ ann.get('created','')[:10] }}
+            {% if not ann.get('active') %}
+              · <span style="color:var(--adm-red)">inactive</span>
+            {% else %}
+              · <span style="color:var(--adm-accent)">live on site</span>
+            {% endif %}
+          </div>
+          <div style="display:flex;gap:6px">
+            <form method="POST" action="{{ url_for('admin.toggle_announcement', ann_id=ann.id) }}">
+              <button class="adm-btn adm-btn-ghost adm-btn-sm">
+                {{ '⏸ Deactivate' if ann.get('active') else '▶ Activate' }}
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.delete_announcement', ann_id=ann.id) }}"
+                  onsubmit="return confirm('Delete this announcement?')">
+              <button class="adm-btn adm-btn-danger adm-btn-sm">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="adm-empty">
+        <div class="adm-empty-icon">📢</div>
+        <div class="adm-empty-title">No announcements yet</div>
+        <div class="adm-empty-sub">Create one to show a sitewide banner.</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Create form -->
+  <div>
+    <div class="adm-panel">
+      <div class="adm-panel-header"><div class="adm-panel-title">New Announcement</div></div>
+      <div class="adm-panel-body">
+        <form method="POST" action="{{ url_for('admin.add_announcement') }}">
+          <div class="adm-field">
+            <label class="adm-label">Message Text</label>
+            <textarea name="text" class="adm-input adm-textarea" rows="3"
+                      maxlength="500" placeholder="e.g. 🎉 New features are live! Check out the changelog." required></textarea>
+            <div style="font-size:.7rem;color:var(--adm-muted);margin-top:4px">Max 500 characters. Supports emoji.</div>
+          </div>
+
+          <div class="adm-field" style="margin-top:16px">
+            <label class="adm-label">Banner Color</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">
+              {% for color, (bg, fg) in [
+                ('accent', ('rgba(0,255,136,.12)', '#00ff88')),
+                ('blue',   ('rgba(0,212,255,.12)', '#00d4ff')),
+                ('yellow', ('rgba(255,211,42,.12)', '#ffd32a')),
+                ('red',    ('rgba(255,71,87,.12)', '#ff4757')),
+                ('purple', ('rgba(167,139,250,.12)', '#a78bfa')),
+                ('orange', ('rgba(255,107,53,.12)', '#ff6b35'))
+              ] %}
+              <label style="cursor:pointer">
+                <input type="radio" name="color" value="{{ color }}" style="display:none" class="color-radio"/>
+                <div class="color-swatch-btn" data-color="{{ color }}"
+                     style="background:{{ bg }};border:2px solid {{ fg }}33;border-radius:6px;padding:8px;text-align:center;font-size:.78rem;font-weight:700;color:{{ fg }};transition:border-color 150ms">
+                  {{ color.capitalize() }}
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="adm-field" style="margin-top:16px">
+            <label class="adm-label">Preview</label>
+            <div id="annPreview" style="background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);border-radius:6px;padding:10px 14px;font-size:.84rem;color:#00ff88;margin-top:6px;min-height:40px">
+              Type your message above…
+            </div>
+          </div>
+
+          <button type="submit" class="adm-btn adm-btn-accent" style="margin-top:18px;width:100%">📢 Publish Announcement</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="adm-alert info">
+      <div>
+        <strong>Tip:</strong> Announcements appear as a dismissible banner at the top of every page. Users can close them once — after that they won't see the same announcement again.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const colorMap = {
+  accent: ['rgba(0,255,136,.1)', '#00ff88'],
+  blue:   ['rgba(0,212,255,.1)', '#00d4ff'],
+  yellow: ['rgba(255,211,42,.1)', '#ffd32a'],
+  red:    ['rgba(255,71,87,.1)', '#ff4757'],
+  purple: ['rgba(167,139,250,.1)', '#a78bfa'],
+  orange: ['rgba(255,107,53,.1)', '#ff6b35']
+};
+
+let selectedColor = 'accent';
+
+document.querySelectorAll('.color-radio').forEach(r => {
+  r.addEventListener('change', () => {
+    selectedColor = r.value;
+    updatePreview();
+    document.querySelectorAll('.color-swatch-btn').forEach(b => {
+      const [bg, fg] = colorMap[b.dataset.color];
+      b.style.borderColor = b.dataset.color === selectedColor ? fg : fg+'33';
+    });
+  });
+});
+
+// Select first by default
+document.querySelectorAll('.color-radio')[0].checked = true;
+
+document.querySelector('textarea[name=text]').addEventListener('input', updatePreview);
+function updatePreview() {
+  const [bg, fg] = colorMap[selectedColor];
+  const prev = document.getElementById('annPreview');
+  const txt = document.querySelector('textarea[name=text]').value || 'Type your message above…';
+  prev.textContent = txt;
+  prev.style.background = bg;
+  prev.style.color = fg;
+  prev.style.borderColor = fg + '55';
+}
+</script>
+{% endblock %}

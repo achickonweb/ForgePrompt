@@ -1,0 +1,73 @@
+<!-- What I changed (Features 4, 6): Added model dropdown and live token counter -->
+{% extends "base.html" %}
+{% block title %}Edit: {{ prompt.title }}{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/prompts/{{ prompt.id }}" class="back-link">← Back to prompt</a>
+    <h1 class="page-title">Edit Prompt</h1>
+  </div>
+</section>
+
+<section class="section" style="max-width:700px">
+  {% if errors %}
+  <ul class="auth-errors" style="margin-bottom:20px">
+    {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <form method="POST" action="/prompts/{{ prompt.id }}/edit" class="settings-card">
+    <div class="form-group">
+      <label>Title <span class="required">*</span></label>
+      <input type="text" name="title" value="{{ prompt.title }}" maxlength="120" required />
+    </div>
+    <div class="form-group">
+      <label>Category <span class="required">*</span></label>
+      <select name="category">
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if prompt.category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Model <span class="hint">(optional)</span></label>
+      <select name="model">
+        <option value="">— Any model —</option>
+        {% for m in model_options %}
+        <option value="{{ m }}" {% if prompt.get('model') == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Prompt Text <span class="required">*</span></label>
+      <textarea name="text" id="editText" rows="10" maxlength="5000" required>{{ prompt.text }}</textarea>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span class="token-badge" id="editTokenCount">~{{ (prompt.text|length / 4)|int }} tokens</span>
+        <span class="char-count">{{ prompt.text|length }} / 5000</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Tags <span class="hint">(comma-separated)</span></label>
+      <input type="text" name="tags" value="{{ prompt.tags | join(', ') }}" />
+    </div>
+    <div style="display:flex;gap:12px">
+      <button type="submit" class="btn-primary">Save Changes</button>
+      <a href="/prompts/{{ prompt.id }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* Feature 6: Live token counter on edit page */
+var editText = document.getElementById('editText');
+if (editText) {
+  editText.addEventListener('input', function() {
+    var tokens = Math.round(this.value.length / 4);
+    document.getElementById('editTokenCount').textContent = '~' + tokens + ' tokens';
+  });
+}
+</script>
+{% endblock %}

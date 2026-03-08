@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Base64 Encoder / Decoder{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <a href="/tools" class="back-link">← All Tools</a>
+    <h1 class="page-title">Base64 Codec</h1>
+    <p class="page-sub">Encode text to Base64 or decode Base64 back to plain text instantly.</p>
+  </div>
+</section>
+
+<section class="section tool-section">
+  <div class="b64-tabs">
+    <button class="tab-btn active" onclick="switchTab('encode', this)">Encode →</button>
+    <button class="tab-btn" onclick="switchTab('decode', this)">← Decode</button>
+  </div>
+
+  <div class="tool-editor-wrap">
+    <div class="editor-pane">
+      <div class="pane-label" id="inputLabel">Plain Text</div>
+      <textarea id="b64Input" class="code-area" spellcheck="false" placeholder="Enter text to encode…" oninput="autoConvert()"></textarea>
+    </div>
+    <div class="editor-divider">
+      <button class="transform-btn" onclick="doConvert()" title="Convert">⇒</button>
+    </div>
+    <div class="editor-pane">
+      <div class="pane-label" id="outputLabel">Base64 Output</div>
+      <pre id="b64Output" class="code-area code-output"></pre>
+    </div>
+  </div>
+
+  <div id="b64Status" class="tool-status"></div>
+
+  <div class="tool-actions-row">
+    <button class="tool-btn" onclick="doConvert()">Convert</button>
+    <button class="tool-btn" onclick="swapValues()">⇄ Swap</button>
+    <button class="tool-btn btn-copy-tool" onclick="copyB64Output()">Copy Output</button>
+    <button class="tool-btn" onclick="clearB64()">Clear</button>
+  </div>
+
+  <div class="tool-tips">
+    <h4>About Base64</h4>
+    <ul>
+      <li>Base64 encodes binary data as ASCII text using 64 printable characters</li>
+      <li>Commonly used in data URIs, email attachments and API tokens</li>
+      <li>Encoded output is ~33% larger than the original</li>
+    </ul>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let mode = 'encode';
+
+function switchTab(newMode, btn) {
+  mode = newMode;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('inputLabel').textContent = mode === 'encode' ? 'Plain Text' : 'Base64 Input';
+  document.getElementById('outputLabel').textContent = mode === 'encode' ? 'Base64 Output' : 'Decoded Text';
+  document.getElementById('b64Input').placeholder = mode === 'encode' ? 'Enter text to encode…' : 'Enter Base64 to decode…';
+  doConvert();
+}
+
+function doConvert() {
+  const input = document.getElementById('b64Input').value;
+  const output = document.getElementById('b64Output');
+  const status = document.getElementById('b64Status');
+  if (!input) { output.textContent = ''; status.textContent = ''; return; }
+  try {
+    if (mode === 'encode') {
+      output.textContent = btoa(unescape(encodeURIComponent(input)));
+      setB64Status('✓ Encoded successfully', 'success');
+    } else {
+      output.textContent = decodeURIComponent(escape(atob(input.trim())));
+      setB64Status('✓ Decoded successfully', 'success');
+    }
+  } catch (e) {
+    output.textContent = '';
+    setB64Status('✗ ' + (mode === 'encode' ? 'Encoding failed' : 'Invalid Base64 string'), 'error');
+  }
+}
+
+function autoConvert() { doConvert(); }
+
+function swapValues() {
+  const inputEl = document.getElementById('b64Input');
+  const outputEl = document.getElementById('b64Output');
+  inputEl.value = outputEl.textContent;
+  mode = mode === 'encode' ? 'decode' : 'encode';
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === (mode === 'encode' ? 0 : 1)));
+  document.getElementById('inputLabel').textContent = mode === 'encode' ? 'Plain Text' : 'Base64 Input';
+  document.getElementById('outputLabel').textContent = mode === 'encode' ? 'Base64 Output' : 'Decoded Text';
+  doConvert();
+}
+
+function copyB64Output() {
+  const text = document.getElementById('b64Output').textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
+}
+
+function clearB64() {
+  document.getElementById('b64Input').value = '';
+  document.getElementById('b64Output').textContent = '';
+  document.getElementById('b64Status').textContent = '';
+}
+
+function setB64Status(msg, type) {
+  const el = document.getElementById('b64Status');
+  el.textContent = msg;
+  el.className = 'tool-status status-' + type;
+}
+</script>
+{% endblock %}

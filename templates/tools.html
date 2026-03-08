@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Developer Tools{% endblock %}
+
+{% block content %}
+
+<section class="page-hero page-hero--sm">
+  <div class="page-hero-inner">
+    <span class="section-tag">// dev utilities</span>
+    <h1 class="page-title">Developer Tools</h1>
+    <p class="page-sub">Instant browser-side utilities — no install, no server, no waiting.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="tools-grid tools-grid--lg">
+
+    <a href="/tools/json-formatter" class="tool-card tool-card--lg">
+      <div class="tool-icon-lg">{ }</div>
+      <div class="tool-info">
+        <h3>JSON Formatter</h3>
+        <p>Prettify, minify and validate JSON. Syntax highlighted, error-tolerant, copy-ready.</p>
+      </div>
+      <div class="tool-tags">
+        <span>Format</span><span>Validate</span><span>Minify</span>
+      </div>
+      <span class="tool-arrow-lg">→</span>
+    </a>
+
+    <a href="/tools/base64" class="tool-card tool-card--lg">
+      <div class="tool-icon-lg">64</div>
+      <div class="tool-info">
+        <h3>Base64 Encode / Decode</h3>
+        <p>Instantly encode plain text to Base64 or decode Base64 back to readable text.</p>
+      </div>
+      <div class="tool-tags">
+        <span>Encode</span><span>Decode</span><span>Clipboard</span>
+      </div>
+      <span class="tool-arrow-lg">→</span>
+    </a>
+
+    <a href="/tools/password-generator" class="tool-card tool-card--lg">
+      <div class="tool-icon-lg">🔐</div>
+      <div class="tool-info">
+        <h3>Password Generator</h3>
+        <p>Generate cryptographically strong passwords with custom length, symbols and character sets.</p>
+      </div>
+      <div class="tool-tags">
+        <span>Secure</span><span>Custom</span><span>Bulk</span>
+      </div>
+      <span class="tool-arrow-lg">→</span>
+    </a>
+
+    <a href="/tools/uuid-generator" class="tool-card tool-card--lg">
+      <div class="tool-icon-lg">⊞</div>
+      <div class="tool-info">
+        <h3>UUID Generator</h3>
+        <p>Generate one or bulk RFC 4122 v4 UUIDs. Multiple formats, instant copy, no duplicates.</p>
+      </div>
+      <div class="tool-tags">
+        <span>UUID v4</span><span>Bulk</span><span>RFC 4122</span>
+      </div>
+      <span class="tool-arrow-lg">→</span>
+    </a>
+
+    <a href="/tools/text-counter" class="tool-card tool-card--lg">
+      <div class="tool-icon-lg">Σ</div>
+      <div class="tool-info">
+        <h3>Text Counter</h3>
+        <p>Count characters, words, sentences, paragraphs and estimated reading time in real-time.</p>
+      </div>
+      <div class="tool-tags">
+        <span>Words</span><span>Chars</span><span>Reading Time</span>
+      </div>
+      <span class="tool-arrow-lg">→</span>
+    </a>
+
+  </div>
+</section>
+
+{% endblock %}
