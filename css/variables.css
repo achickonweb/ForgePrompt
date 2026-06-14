@@ -1,0 +1,32 @@
+:root {
+  /* Colors - Dark Industrial UI (From v5) */
+  --bg:          #0a0a0c;
+  --bg2:         #111115;
+  --bg3:         #18181e;
+  --border:      #2a2a35;
+  --border-hi:   #3d3d50;
+  
+  --text:        #e8e8f0;
+  --text-muted:  #7a7a90;
+  --text-dim:    #4a4a60;
+  
+  --accent:      #00ff88;
+  --accent2:     #00d4ff;
+  --accent3:     #ff6b35;
+  --accent-dim:  rgba(0, 255, 136, 0.10);
+  --accent2-dim: rgba(0, 212, 255, 0.08);
+  
+  --red:         #ff4757;
+  --yellow:      #ffd32a;
+  
+  /* Layout & Metrics */
+  --radius:      6px;
+  --radius-lg:   12px;
+  --nav-h:       64px;
+  --max-w:       1600px;
+  --transition:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Typography */
+  --font-display: 'Syne', sans-serif;
+  --font-mono:    'Space Mono', monospace;
+}

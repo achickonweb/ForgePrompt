@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgePrompt — AI Prompts & Dev Tools</title>
+    
+    <!-- Fonts matching v5 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/pages.css">
+
+    <script>
+        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            document.write('<div style="padding:40px;text-align:center;font-family:sans-serif;background:#0a0a0c;color:#fff;height:100vh;display:flex;flex-direction:column;justify-content:center;"><h2>Mobile Not Supported</h2><p style="color:#7a7a90;margin-top:16px;">Please access ForgePrompt on a desktop browser.</p></div>');
+            window.stop();
+        }
+    </script>
+</head>
+<body>
+    <div class="noise-overlay" aria-hidden="true"></div>
+
+    <header id="navbar-container" class="site-header"></header>
+    
+    <main id="app-root" class="site-main">
+        <!-- SPA pages injected here -->
+    </main>
+
+    <footer id="footer-container" class="site-footer"></footer>
+    
+    <div id="toast-container"></div>
+    <div id="modal-container"></div>
+
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Firebase & App Logic -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
